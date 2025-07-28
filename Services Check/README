@@ -1,0 +1,2 @@
+This program is desgine to read the services app and check which services are not running, based on the App.config file, so names can be added or removed.
+After reading the data and getting which are not running, it sends it to the database table and that table that uploads it as an alert for the support team.
