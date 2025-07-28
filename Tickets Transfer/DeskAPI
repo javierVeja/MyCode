@@ -1,1 +1,85 @@
+using QDI.DB;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using QDI.Interface;
+using QDI.Repository;
+using QDI.Model;
 
+namespace Desk365API
+{
+  public class DeskAPI
+  {
+    //IAppSetting _appSettings = null;
+    string apikey = null;
+    string createTicket = null;
+    string createNote = null;
+    public DeskAPI(IAppSetting appSettings)
+    {
+      //appSettings = appSetting;
+      List<DCAppSettings> lstAppSetting = appSettings.getAppSettings("Desk365", "API");
+      apikey = lstAppSetting.Where(a => a.AppSet == "Key").FirstOrDefault().Text;
+      createTicket = lstAppSetting.Where(a => a.AppSet == "CreateTicket").FirstOrDefault().Text;
+      createNote = lstAppSetting.Where(a => a.AppSet == "CreateNote").FirstOrDefault().Text;
+    }
+
+    public async Task<string> CreateTicket(DeskAPIPostTicket deskAPIPostTicket)
+    {
+      using (HttpClient client = new HttpClient())
+      {
+        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"{createTicket}{Uri.EscapeDataString(Newtonsoft.Json.JsonConvert.SerializeObject(deskAPIPostTicket))}"))
+        {
+          request.Headers.Add("accept", "*/*");
+          request.Headers.Add("Authorization", apikey);
+
+          MultipartFormDataContent content = new MultipartFormDataContent();
+          if (deskAPIPostTicket.Attachments.Count == 0)
+            content.Add(new StringContent(""), "file");
+          else
+            foreach (string att in deskAPIPostTicket.Attachments)
+              content.Add(new ByteArrayContent(File.ReadAllBytes(att)), "files", Path.GetFileName(att));
+          request.Content = content;
+
+          HttpResponseMessage response = await client.SendAsync(request);
+          response.EnsureSuccessStatusCode();
+          string responseBody = await response.Content.ReadAsStringAsync();
+          return responseBody;
+        }
+      }
+    }
+
+    public async Task<string> CreateTicketNote(DeskApIPostNote deskApiNotePost)
+    {
+      using (var httpClient = new HttpClient())
+      {
+        using (var request = new HttpRequestMessage(new HttpMethod("POST"), createNote))
+        {
+          request.Headers.TryAddWithoutValidation("accept", "*/*");
+          request.Headers.TryAddWithoutValidation("Authorization", apikey);
+
+          var multipartContent = new MultipartFormDataContent();
+          if (deskApiNotePost.Attachments.Count == 0)
+            multipartContent.Add(new StringContent(""), "file");
+          else if (deskApiNotePost.Attachments.Count == 1)
+            multipartContent.Add(new ByteArrayContent(File.ReadAllBytes(deskApiNotePost.Attachments[0])), "file", Path.GetFileName(deskApiNotePost.Attachments[0]));
+          else
+            foreach (string att in deskApiNotePost.Attachments)
+              multipartContent.Add(new ByteArrayContent(File.ReadAllBytes(att)), "files", Path.GetFileName(att));
+          multipartContent.Add(new StringContent(deskApiNotePost.TicketID.ToString()), "ticket_number");
+          multipartContent.Add(new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(deskApiNotePost)), "note_object");
+          request.Content = multipartContent;
+
+          var response = await httpClient.SendAsync(request);
+          response.EnsureSuccessStatusCode();
+          string responseBody = await response.Content.ReadAsStringAsync();
+          return responseBody;
+        }
+      }
+    }
+  }
+}
