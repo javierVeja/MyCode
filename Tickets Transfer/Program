@@ -1,33 +1,43 @@
-
+using Desk365API;
+using Microsoft.VisualBasic.FileIO;
+using QDI.DB;
+using QDI.Interface;
+using QDI.Repository;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Microsoft.VisualBasic.FileIO;
-using Desk365API;
-using QDI.DB;
-using QDI.Repository;
-using QDI.Interface;
+using System.Text.RegularExpressions;
 
 namespace TicketTransfer
 {
   class Program
   {
-
     public static List<TicketData> ticketList = new List<TicketData>();
+    public static List<Conversation> failedConversationsList = new List<Conversation>();
 
+    public static int counter = 0;
+
+    static string folderPath = @"C:\Users\jlopez\Quality Dining, Inc\IT Support - Documents\Ticketing System\MainFolders\";
+
+    static List<AttObject> LstNoteAtt = null;
+
+    static IDB db = new OracleDBConn();
+    static IAppSetting appSetting = new RepoAppSetting(db);
+    static DeskAPI deskAPI = new DeskAPI(appSetting);
     static void Main(string[] args)
     {
-      string folderPath = @"C:\TicketsTransfer\OneDrive_2_6-24-2025\";
+      //string noteFileName = "Requests_Notifications_1.csv";
 
-      //create two foreach, one for request and then the other two
-      string[] csvFiles = { "Requests_Notifications.csv", "Requests_Attachments.csv" };
+      string[] csvFolders = { folderPath + "RequestAttachments", folderPath + "RequestNotifications" };
 
+      //string[] csvFiles = { noteFileName, "Requests_Attachments_1.csv" };
 
-      string fullPath = Path.Combine(folderPath, "Requests.csv");
+      string csvNotifAttFolder = folderPath + "NotificationAttachments";
+
+      LstNoteAtt = ReadNotificationAttachment(csvNotifAttFolder);
+
+      string fullPath = Path.Combine(folderPath, "Requests_Master_092225copy.csv");
 
       TextFieldParser parser = new TextFieldParser(fullPath);
 
@@ -48,99 +58,143 @@ namespace TicketTransfer
         MapToTicketData(row);
       }
 
-
-      foreach (string csvFile in csvFiles)
+      //Dictionary<string, string> DicNotificationAttachment =
+      foreach (string fld in csvFolders)
       {
-        string fullPath1 = Path.Combine(folderPath, csvFile);
+        string[] arFiles = Directory.GetFiles(fld);
 
-        TextFieldParser parser1 = new TextFieldParser(fullPath1);
-
-        parser1.TextFieldType = FieldType.Delimited;
-        parser1.SetDelimiters(",");
-        parser1.HasFieldsEnclosedInQuotes = true;
-
-        string[] headers1 = parser1.ReadFields();
-
-        while (!parser1.EndOfData)
+        foreach (string csvFile in arFiles)
         {
-          string[] fields = parser1.ReadFields();
+          string fullPath1 = Path.Combine(folderPath, csvFile);
 
-          // Combines headers and values into a dictionary where each column header maps to its corresponding field value.
-          // Trims whitespace from both headers and values.
+          TextFieldParser parser1 = new TextFieldParser(fullPath1);
 
-          Dictionary<string, string> row = headers1.Zip(fields, (h, v) => new { h, v }).ToDictionary(x => x.h.Trim(), x => x.v.Trim());
+          parser1.TextFieldType = FieldType.Delimited;
+          parser1.SetDelimiters(",");
+          parser1.HasFieldsEnclosedInQuotes = true;
 
+          string[] headers1 = parser1.ReadFields();
 
-          MapToConversation(row);
+          while (!parser1.EndOfData)
+          {
+            string[] fields = parser1.ReadFields();
+
+            Dictionary<string, string> row = headers1.Zip(fields, (h, v) => new { h, v }).ToDictionary(x => x.h.Trim(), x => x.v.Trim());
+
+            MapToConversation(row, false);
+          }
         }
       }
-
-      IDB db = new OracleDBConn();
-      IAppSetting appSetting = new RepoAppSetting(db);
-      DeskAPI deskAPI = new DeskAPI(appSetting);
-
-      foreach (TicketData ticket in ticketList)
+  foreach (TicketData ticket in ticketList)
       {
+        int go = 1;
         //Link conversations to tickets
         DeskAPIPostTicket deskAPIData = GetAPIObject(ticket);
         DeskAPIData deskData = null;
-
-        try
+        if (1 == go)
         {
-          deskData = Newtonsoft.Json.JsonConvert.DeserializeObject<DeskAPIData>(deskAPI.CreateTicket(deskAPIData).GetAwaiter().GetResult());
-        }
-        catch (Exception ex)
-        {
-          string logFolder = @"C:\DeskAPILogs\";
-          Directory.CreateDirectory(logFolder); // Ensure folder exists
-
-          string logFilePathName = Path.Combine(logFolder, $"TicketInfo_{DateTime.Today:yyyy-MM-dd}.log");
-
-          string logContent = $"[{DateTime.Now}] TicketID: {ticket.RequestID} - {ex.Message}{Environment.NewLine}";
-
-          File.AppendAllText(logFilePathName, logContent);
-        }
-
-
-        if (deskData == null)
-        {
-          continue;
-        }
-
-        List<DeskApIPostNote> deskApIPostNotes = GetAPINotesObject(deskData.ticket_number, ticket);
-
-        foreach (DeskApIPostNote postNote in deskApIPostNotes)
-        {
-          deskAPI.CreateTicketNote(postNote).GetAwaiter().GetResult();
-        }
-
-        if (!string.IsNullOrEmpty(ticket.Resolution))
-        {
-          DeskApIPostNote resolutionNote = new DeskApIPostNote
+          try
           {
-            TicketID = deskData.ticket_number,
-            body = $"Resolution: {ticket.Resolution}\nSubmitted By: {ticket.ResolutionSubmittedBy}",
-          };
-          deskAPI.CreateTicketNote(resolutionNote).GetAwaiter().GetResult();
+            if (counter == 50)
+            {
+              Console.WriteLine(counter);
+            }
+
+            deskData = deskAPI.CreateTicket(deskAPIData).GetAwaiter().GetResult();
+            if (deskData.ConversationsList.Count > 0)
+            {
+              foreach (var item in deskData.ConversationsList)
+              {
+                ticket.ConversationsList.Add(new Conversation {ParentID = item.ParentID, Description = item.Description, Sender = ticket.CreatedBy });
+
+              }
+            }
+            counter++;
+
+            Console.WriteLine(ticket.RequestID);
+
+            string logTicketCreated = Path.Combine(folderPath, $"TicketsCreated_{ DateTime.Today:yyyy - MM - dd}.txt");
+
+            if (!File.Exists(logTicketCreated))
+            {
+              File.AppendAllText(logTicketCreated, "Time,Ticket ID\n");
+            }
+            File.AppendAllText(logTicketCreated, $"{DateTime.Now:HH:mm:ss},{ticket.RequestID}{Environment.NewLine}");
+
+          }
+          catch (Exception ex)
+          {
+            string logFilePathName = Path.Combine(folderPath, $"ticketFailed_{DateTime.Today:yyyy-MM-dd}.csv");
+
+            if (!File.Exists(logFilePathName))
+            {
+              File.AppendAllText(logFilePathName, "DateTime,Request ID,Created Date,Subject,Requester Name,Description,Technician,Status,Category,Sub Category,Item,Priority,Request Type,Mode,Group,Caller,Pager,Resolution,Resolution Time, Attachment List,Error Message\n");
+            }
+
+            string csvTicketEntry = $"\"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\"," +
+                              $"\"{ticket.RequestID}\"," +
+                              $"\"{ticket.CreatedDate}\"," +
+                              $"\"{ticket.Subject}\"," +
+                              $"\"{ticket.RequesterName}\"," +
+                              $"\"{FormatHtmlDescription(ticket.Description)}\"," +
+                              $"\"{ticket.Technician}\"," +
+                              $"\"{ticket.Status}\"," +
+                              $"\"{ticket.Category}\"," +
+                              $"\"{ticket.SubCategory}\"," +
+                              $"\"{ticket.Item}\"," +
+                              $"\"{ticket.Priority}\"," +
+                              $"\"{ticket.requesterType}\"," +
+                              $"\"{ticket.Mode}\"," +
+                              $"\"{ticket.Group}\"," +
+                              $"\"{ticket.Caller}\"," +
+                              $"\"{ticket.Pager}\"," +
+                              $"\"{FormatHtmlDescription(ticket.Resolution)}\"," +
+                              $"\"{ticket.CompletedDate}\"," +
+                              $"\"{ticket.AttachmentList}\"," +
+                              $"\"{ex.Message}\"," +
+                              $"\"{ex.StackTrace}\"\n";
+
+            File.AppendAllText(logFilePathName, csvTicketEntry);
+
+            LogConversation(ticket.ConversationsList, null);
+
+            continue;
+          }
+
+          //deskData = new DeskAPIData { New_Ticket_number = 197 };
+          //if (deskData == null)
+          //{
+          //  continue;
+          //}
+
+          List<DeskApIPostNote> deskApIPostNotes = GetAPINotesObject(deskData.ticket_number, ticket);
+
+          if (!string.IsNullOrEmpty(ticket.Resolution))
+          {
+            deskApIPostNotes.Add(new DeskApIPostNote
+            {
+              TicketID = deskData.ticket_number,
+              body = $"Resolution: {FormatHtmlDescription(ticket.Resolution)}\nSubmitted By: {ticket.ResolutionSubmittedBy}"
+            });
+          }
+
+          foreach (DeskApIPostNote postNote in deskApIPostNotes)
+          {
+            try
+            {
+              string test = Newtonsoft.Json.JsonConvert.SerializeObject(postNote);
+              deskAPI.CreateTicketNote(postNote).GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+              LogConversation(ticket.ConversationsList, deskData.ticket_number);
+
+              continue;
+            }
+          }
         }
-
-        //Console.WriteLine($"RequestID: {ticket.RequestID} | {ticket.Subject}");
-
-        //if (ticket.Conversations != null && ticket.Conversations.Any())
-        //{
-        //  foreach (Conversation conversationFile in ticket.Conversations)
-        //  {
-        //    Console.WriteLine($" File name: {conversationFile.FileName}");
-        //  }
-        //}
-        //else
-        //{
-        //  Console.WriteLine("No conversation found.");
-        //}
-        //Console.WriteLine(new string('-', 50));
       }
-      //Console.WriteLine("Done. Press any key to exit.");
-      //Console.ReadKey();
+      //ProcessFailedNotes(noteFileName);
     }
 
     public static void MapToTicketData(Dictionary<string, string> row)
@@ -175,16 +229,17 @@ namespace TicketTransfer
       ticket.Status = Get("Status");
       ticket.DueByDate = GetDate("DueBy Date");
       ticket.CompletedDate = GetDate("Completed Date");
+      ticket.requesterType = Get("Request Type");
       ticket.Category = Get("Category");
-      ticket.SubCategory = Get("SubCategory");
+      ticket.SubCategory = Get("Sub Category");
       ticket.Item = Get("Item");
-      ticket.Priority = Get("Priority");
+      ticket.Priority = GetInt("Priority");
       ticket.Level = Get("Level");
       ticket.Mode = Get("Mode");
       ticket.Department = Get("Department");
       ticket.CreatedBy = Get("Created By");
       ticket.Resolution = Get("Resolution");
-      ticket.ResolutionSubmittedBy = Get("Resolution Submitted By");
+      ticket.ResolutionSubmittedBy = Get("Resolution submitted by");
       ticket.Group = Get("Group");
       ticket.LastUpdatedTime = GetDate("Last Updated Time");
       ticket.LastUpdatedBy = Get("Last Updated By");
@@ -194,7 +249,7 @@ namespace TicketTransfer
       ticketList.Add(ticket);
     }
 
-    static void MapToConversation(Dictionary<string, string> row)
+    static void MapToConversation(Dictionary<string, string> row, Boolean failedConversation)
     {
       Conversation ticketConversation = new Conversation();
 
@@ -210,52 +265,79 @@ namespace TicketTransfer
         return int.TryParse(Get(key), out i) ? i : 0;
       }
 
-      ticketConversation.FileName = Get("File Name");
+      string FileName = Get("File Name") ?? "";
       ticketConversation.ParentID = GetInt("Parent Id");
-      //ticketConversation.Sender = Get("Sender");
-      //ticketConversation.ToAddress = Get("To Address");
-      ticketConversation.Description = Get("Description");
-      ticketConversation.to_address = Get("To Address");
+      ticketConversation.Description = "Sender: " + Get("Sender") + "\n" + "To Address: " + Get("To Address") + "\n"+ "Send Time: " + Get("Send Time") + "\n" + "Subject: " + Get("Subject") + "\n\n" + "Description: " + Get("Description");
+      ticketConversation.NewTicketID = GetInt("New Ticket ID");
+      ticketConversation.conversationID = Get("Conversation Id");
 
-      TicketData ticket = ticketList.Where(c => c.RequestID == ticketConversation.ParentID).FirstOrDefault();
-
-      ticket.ConversationsList.Add(ticketConversation);
-    }
-
-    private static async Task PingDesk365Async()
-    {
-      string apiKey = ""; // 
-      string baseUrl = "";
-
-      using (HttpClient client = new HttpClient())
+      if (failedConversation == false)
       {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        TicketData ticket = ticketList.Where(c => c.RequestID == ticketConversation.ParentID).FirstOrDefault();
 
-        try
+        if (ticket != null)
         {
-          var response = await client.GetAsync(baseUrl);
-          var content = await response.Content.ReadAsStringAsync();
+          if (!string.IsNullOrEmpty(FileName))
+            ticket.AttachmentList.Add(folderPath + FileName);
+          else
+          {
+            ticket.ConversationsList.Add(ticketConversation);
 
-          Console.WriteLine($"Status Code: {(int)response.StatusCode} ({response.StatusCode})");
-          Console.WriteLine($"Response Body: {content}");
-        }
-        catch (Exception ex)
-        {
-          Console.WriteLine($"Ping failed: {ex.Message}");
+            foreach (AttObject item in LstNoteAtt.Where(a => a.ConversationId == ticketConversation.conversationID))
+            {
+              ticketConversation.AttachmentList.Add(folderPath + item.FileName);
+            }
+          }
         }
       }
+      else
+      {
+        failedConversationsList.Add(ticketConversation);
+      }
+    }
+
+    public static void LogConversation(List<Conversation> ConversationsList, int? newTicketID = null)
+    {
+      string logFilePathName = Path.Combine(@folderPath, $"NotesFailed_{DateTime.Today:yyyy-MM-dd}.csv");
+
+      if (!File.Exists(logFilePathName))
+      {
+        File.AppendAllText(logFilePathName, "Parent Id,Conversation Id,Description,New Ticket ID\n");
+      }
+
+      foreach (var con in ConversationsList)
+      {
+        string csvNotesEntry =
+            $"\"{(newTicketID.HasValue ? "" : con.ParentID.ToString())}\"," +
+            $"\"{con.conversationID}\"," +
+            $"\"{FormatHtmlDescription(con.Description)}\"," +
+            $"\"{(newTicketID.HasValue ? newTicketID.Value.ToString() : "")}\"\n";
+
+        File.AppendAllText(logFilePathName, csvNotesEntry);
+      }
+
     }
 
     public static List<DeskApIPostNote> GetAPINotesObject(int TicketID, TicketData ticketData)
     {
       List<DeskApIPostNote> lstDeskNotes = new List<DeskApIPostNote>();
+
       foreach (Conversation con in ticketData.ConversationsList)
       {
+        if (con.NewTicketID > 0)
+          continue;
+
+        string formattedBody = FormatHtmlDescription(con.Description);
+
+        if (formattedBody == string.Empty || formattedBody.Length <= 0)
+          continue;
+
         DeskApIPostNote note = new DeskApIPostNote();
         note.TicketID = TicketID;
-        note.body = con.Description;
-        note.notify_emails = con.to_address;
+        note.body = formattedBody;
+        note.new_ticket_ID = con.NewTicketID;
         note.agent_email = con.Sender;
+        note.Attachments = con.AttachmentList;
 
         lstDeskNotes.Add(note);
       };
@@ -264,33 +346,55 @@ namespace TicketTransfer
 
     public static DeskAPIPostTicket GetAPIObject(TicketData ticketData)
     {
-      string storeNumber = ticketData.RequesterName.Replace("BK-", "").TrimStart('0');
+      string requesterName = ticketData.RequesterName.ToLower();
 
-      string[] parts = ticketData.Technician.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-      string tech_email = "";
-      if (parts.Length >= 2)
+      if (!requesterName.Contains("@"))
       {
-        string firstInitial = parts[0].Substring(0, 1).ToLower();
-        string lastName = parts[1].ToLower();
-        tech_email = $"{firstInitial}{lastName}@qdi.com";
+        if (requesterName.Contains("bk-"))
+        {
+          requesterName = requesterName.Replace("bk-", "").TrimStart('0');
+          requesterName = $"bk{requesterName}mgr@qdi.com";
+        }
+        if (requesterName.Contains("pv-"))
+        {
+          requesterName = requesterName.Replace("pv-", "");
+          requesterName = $"pv{requesterName}mgr@qdi.com";
+        }
+        if (requesterName.Contains("sc-"))
+        {
+          requesterName = requesterName.Replace("sc-", "");
+          requesterName = $"sc{requesterName}mgr@qdi.com";
+        }
+        if (requesterName.Contains("uk-"))
+        {
+          requesterName = requesterName.Replace("uk-", "");
+          requesterName = $"uk{requesterName}mgr@qdi.com";
+        }
       }
+
+      //string[] parts = ticketData.Technician.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+      //string tech_email = "";
+      //if (parts.Length >= 2)
+      //{
+      //  string firstInitial = parts[0].Substring(0, 1).ToLower();
+      //  string lastName = parts[1].ToLower();
+      //  tech_email = $"{firstInitial}{lastName}@qdi.com";
+      //}
 
       return new DeskAPIPostTicket
       {
-        //ticket_number = ticketData.RequestID,
-        //contact_email = "bk" + ticketData.RequesterName.Remove(0, 3).ToLower() + "mgr@qdi.com",
-        email = $"bk{storeNumber}mgr@qdi.com", //convert name to email
-        subject = ticketData.Subject,
-        description = ticketData.Description,
+        email = requesterName,
+        subject = ticketData.Subject?.Length > 119 ? ticketData.Subject.Substring(0, 119) : ticketData.Subject,
+        description = FormatHtmlDescription(ticketData.Description),
         status = ticketData.Status,
-        priority = 2,
-        type = "",
-        assign_to = tech_email, //convert name to email
+        priority = ticketData.Priority,
+        type = ticketData.requesterType,
+        assign_to = ticketData.Technician,
         group = ticketData.Group,
         category = ticketData.Category,
         subcategory = ticketData.SubCategory,
-        Attachments = ticketData.AttachmentList,        
+        Attachments = ticketData.AttachmentList,
 
         custom_fields = new CustomFields
         {
@@ -299,9 +403,153 @@ namespace TicketTransfer
           cf_Caller = ticketData.Caller,
           cf_Pager = ticketData.Pager,
           cf_Requester_Name = ticketData.RequesterName,
-          cf_District = ticketData.Department,
+          cf_OldTicketID = ticketData.RequestID.ToString(),
+          cf_CompletedDate = ticketData.CompletedDate.Value.ToString("yyyy-MM-dd"),
+          cf_CreatedDate = ticketData.CreatedDate.Value.ToString("yyyy-MM-dd"),
         }
-      };      
+      };
+    }
+
+    public static void ProcessFailedNotes(string fileName)
+    {
+      string path = (folderPath + fileName);
+      TextFieldParser parser = new TextFieldParser(path);
+
+      parser.TextFieldType = FieldType.Delimited;
+      parser.SetDelimiters(",");
+      parser.HasFieldsEnclosedInQuotes = true;
+
+      string[] headers = parser.ReadFields();
+
+      while (!parser.EndOfData)
+      {
+        string[] fields = parser.ReadFields();
+
+        Dictionary<string, string> row = headers.Zip(fields, (h, v) => new { h, v }).ToDictionary(x => x.h.Trim(), x => x.v.Trim());
+
+        MapToConversation(row, true);
+      }
+
+      //List<DeskApIPostNote> lstDeskNotes = new List<DeskApIPostNote>();
+      List<Conversation> failedCon = new List<Conversation>();
+
+      foreach (Conversation con in failedConversationsList)
+      {
+        if (con.NewTicketID <= 0)
+        {
+          continue;
+        }
+
+        string formattedBody = FormatHtmlDescription(con.Description);
+
+        if (formattedBody == string.Empty || formattedBody.Length <= 0)
+          continue;
+
+        DeskApIPostNote note = new DeskApIPostNote();
+        note.body = formattedBody;
+        note.TicketID = con.NewTicketID;
+
+        try
+        {
+          deskAPI.CreateTicketNote(note).GetAwaiter().GetResult();
+        }
+        catch (Exception)
+        {
+          failedCon.Add(con);
+
+          continue;
+        }
+      };
+
+      if (failedCon.Count > 0)
+      {
+        LogConversation(failedCon);
+      }
+    }
+
+    private static string FormatHtmlDescription(string html)
+    {
+      if (string.IsNullOrWhiteSpace(html))
+        return string.Empty;
+
+      // Convert <br>, <div>, etc. to newline
+      html = Regex.Replace(html, @"<\s*(br|div)\s*/?>", "\n", RegexOptions.IgnoreCase);
+
+      // Remove all other HTML tags
+      string textOnly = Regex.Replace(html, "<.*?>", string.Empty);
+
+      // Trim each line and re-join with <br/>
+      string[] lines = textOnly.Split('\n');
+      return string.Join("<br/>", lines.Select(line => line.Trim()).Where(line => !string.IsNullOrEmpty(line)));
+    }
+
+    public static List<AttObject> ReadNotificationAttachment(string folderPath)
+    {
+      string[] csvFiles = Directory.GetFiles(folderPath);
+
+      List<AttObject> ListAtt = new List<AttObject>();
+
+      foreach (string csvFile in csvFiles)
+      {
+        string fullPath1 = Path.Combine(folderPath, csvFile);
+
+        TextFieldParser parser1 = new TextFieldParser(fullPath1);
+
+        parser1.TextFieldType = FieldType.Delimited;
+        parser1.SetDelimiters(",");
+        parser1.HasFieldsEnclosedInQuotes = true;
+
+        string[] headers1 = parser1.ReadFields();
+
+        while (!parser1.EndOfData)
+        {
+          string[] fields = parser1.ReadFields();
+
+          Dictionary<string, string> row = headers1.Zip(fields, (h, v) => new { h, v }).ToDictionary(x => x.h.Trim(), x => x.v.Trim());
+
+
+          ListAtt.Add(new AttObject { ConversationId = Convert.ToString(row["Parent Id"]), FileName = Convert.ToString(row["File Name"]) });
+        }
+      }
+      return ListAtt;
+    }
+
+    static void MapNotificationAttachments(Dictionary<string, string> row, Boolean failedConversation)
+    {
+      Conversation ticketConversation = new Conversation();
+
+      string Get(string key)
+      {
+        string get;
+        return row.TryGetValue(key, out get) ? get : null;
+      }
+
+      string FileName = Get("File Name") ?? "";
+
+      if (failedConversation == false)
+      {
+
+        TicketData ticket = ticketList.Where(c => c.RequestID == ticketConversation.ParentID).FirstOrDefault();
+
+        if (ticket != null)
+        {
+          if (!string.IsNullOrEmpty(FileName))
+            ticket.AttachmentList.Add(folderPath + FileName);
+          else
+            ticket.ConversationsList.Add(ticketConversation);
+        }
+      }
+      else
+      {
+        failedConversationsList.Add(ticketConversation);
+      }
+    }
+
+    public class AttObject
+    {
+      public string ConversationId { get; set; }
+
+      public string FileName { get; set; }
     }
   }
 }
