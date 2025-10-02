@@ -16,12 +16,12 @@ namespace TicketTransfer
     public string Technician { get; set; }
     public string Status { get; set; }
     public DateTime? DueByDate { get; set; }
-    public DateTime?  CompletedDate { get; set; }
-    public DateTime? ResolvedTime { get; set; }
+    public DateTime? CompletedDate { get; set; }
     public string Category { get; set; }
     public string SubCategory { get; set; }
     public string Item { get; set; }
-    public string Priority { get; set; }
+    public string requesterType { get; set; }
+    public int Priority { get; set; }
     public string Level { get; set; }
     public string Mode { get; set; }
     public string Department { get; set; }
@@ -45,10 +45,9 @@ namespace TicketTransfer
     public int ParentID { get; set; }
     public string Description { get; set; }
     public string FileName { get; set; }
-    public string to_address { get; set; }
+    public int NewTicketID { get; set; }
+    public string conversationID { get; set; }
     public string Sender { get; set; }
-
+    public List<string> AttachmentList { get; set; } = new List<string>();
   }
-
-
 }
