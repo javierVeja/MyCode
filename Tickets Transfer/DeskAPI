@@ -28,8 +28,16 @@ namespace Desk365API
       createNote = lstAppSetting.Where(a => a.AppSet == "CreateNote").FirstOrDefault().Text;
     }
 
-    public async Task<string> CreateTicket(DeskAPIPostTicket deskAPIPostTicket)
+    public async Task<DeskAPIData> CreateTicket(DeskAPIPostTicket deskAPIPostTicket)
     {
+      DeskAPIData data = null;
+
+      DateTime dt = DateTime.Now.AddSeconds(5);
+      while (DateTime.Now < dt)
+      {
+
+      }
+
       using (HttpClient client = new HttpClient())
       {
         using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"{createTicket}{Uri.EscapeDataString(Newtonsoft.Json.JsonConvert.SerializeObject(deskAPIPostTicket))}"))
@@ -44,17 +52,44 @@ namespace Desk365API
             foreach (string att in deskAPIPostTicket.Attachments)
               content.Add(new ByteArrayContent(File.ReadAllBytes(att)), "files", Path.GetFileName(att));
           request.Content = content;
+          try
+          {
+            HttpResponseMessage response = client.SendAsync(request).GetAwaiter().GetResult();
+            response.EnsureSuccessStatusCode();
+            string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            data = Newtonsoft.Json.JsonConvert.DeserializeObject<DeskAPIData>(responseBody);
 
-          HttpResponseMessage response = await client.SendAsync(request);
-          response.EnsureSuccessStatusCode();
-          string responseBody = await response.Content.ReadAsStringAsync();
-          return responseBody;
+          }
+          catch (Exception ex)
+          {
+            throw ex;
+          }
+
+          if (data != null && deskAPIPostTicket.ticketNote != null)
+          {
+            deskAPIPostTicket.ticketNote.TicketID = data.ticket_number;
+            try
+            {
+              CreateTicketNote(deskAPIPostTicket.ticketNote).GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+              data.ConversationsList.Add(new Conversation { ParentID = Convert.ToInt32(deskAPIPostTicket.custom_fields.cf_OldTicketID), Description = deskAPIPostTicket.ticketNote.body });
+            }
+          }
+          return data;
         }
       }
     }
 
     public async Task<string> CreateTicketNote(DeskApIPostNote deskApiNotePost)
     {
+      DateTime dt = DateTime.Now.AddSeconds(5);
+      while (DateTime.Now < dt)
+      {
+
+      }
+
       using (var httpClient = new HttpClient())
       {
         using (var request = new HttpRequestMessage(new HttpMethod("POST"), createNote))
@@ -74,9 +109,10 @@ namespace Desk365API
           multipartContent.Add(new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(deskApiNotePost)), "note_object");
           request.Content = multipartContent;
 
-          var response = await httpClient.SendAsync(request);
+          var response = httpClient.SendAsync(request).GetAwaiter().GetResult();
+
           response.EnsureSuccessStatusCode();
-          string responseBody = await response.Content.ReadAsStringAsync();
+          string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
           return responseBody;
         }
       }
