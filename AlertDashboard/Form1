@@ -1,0 +1,390 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using QDI;
+using QDI.Model;
+
+namespace QDIAlertDashboard
+{
+  public partial class form1 : Form
+  {
+    private static clsDBConnection dbQDI = new clsDBConnection(clsDBConnection.DBs.QDIProd);
+    private Timer dispatcherTimer;
+
+    private string AlertTypeRow1;
+    private string AlertTypeRow2;
+    private string AlertTypeRow3;
+    private string AlertTypeRow4;
+
+    private Label[] lblDisplayNames;
+    private Label[] lblAlertCounts;
+    private Label[] lblAlertContents;
+    private Panel[] groupAlerts;
+
+    [DllImport("user32.dll")]
+    public static extern bool ReleaseCapture();
+
+    [DllImport("user32.dll")]
+    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+    public const int WM_NCLBUTTONDOWN = 0xA1;
+    public const int HT_CAPTION = 0x2;
+
+
+    public form1()
+    {
+      InitializeComponent();
+
+      EnableDrag(this);
+
+      this.MouseDown += Form1_MouseDown;
+
+      foreach (Control c in this.Controls)
+      {
+        c.MouseDown += Form1_MouseDown;
+      }
+
+      ContextMenuStrip = contextMenuStrip1;
+
+      MenuItemHandlers();
+    }
+
+    private void MenuItemHandlers()
+    {
+      PopulateAlertTypeMenu(row1ToolStripMenuItem, 1);
+      PopulateAlertTypeMenu(row2ToolStripMenuItem, 2);
+      PopulateAlertTypeMenu(row3ToolStripMenuItem, 3);
+      PopulateAlertTypeMenu(row4ToolStripMenuItem, 4);
+
+    }
+
+    private void Form1_Load(object sender, EventArgs e)
+    {
+      this.FormBorderStyle = FormBorderStyle.Sizable;
+      this.MaximizeBox = true;
+      this.MinimizeBox = true;
+
+      string[] args = Environment.GetCommandLineArgs();
+      AlertTypeRow1 = (args.Length > 1) ? args[1] : "S";
+      AlertTypeRow2 = "SV";
+      AlertTypeRow3 = "p";
+      AlertTypeRow4 = "HB";
+
+      // Initialize arrays
+      lblDisplayNames = new[] { lblDisplayName1, lblDisplayName2, lblDisplayName3, lblDisplayName4 };
+      lblAlertCounts = new[] { lblAlertCount1, lblAlertCount2, lblAlertCount3, lblAlertCount4 };
+      lblAlertContents = new[] { lblAlertContent1, lblAlertContent2, lblAlertContent3, lblAlertContent4 };
+      groupAlerts = new[] { groupAlert1, groupAlert2, groupAlert3, groupAlert4 };
+
+      dispatcherTimer = new Timer();
+      dispatcherTimer.Interval = 10000;
+      dispatcherTimer.Tick += DispatcherTimer_Tick;
+      dispatcherTimer.Start();
+
+      for (int i = 1; i <= 4; i++)
+      {
+        ReloadAlerts(i);
+      }
+    }
+
+    private void DispatcherTimer_Tick(object sender, EventArgs e)
+    {
+      for (int i = 1; i <= 4; i++)
+      {
+        ReloadAlerts(i);
+      }
+    }
+
+    private void ReloadAlerts(int row)
+    {
+      try
+      {
+        string[] alertTypes = { AlertTypeRow1, AlertTypeRow2, AlertTypeRow3, AlertTypeRow4 };
+        string alertType = (row >= 1 && row <= 4) ? alertTypes[row - 1] : "p";
+
+        int index = row - 1;
+
+        // Handle NONE option: hide the row and skip further work
+        if (alertType == "NONE")
+        {
+          groupAlerts[index].Visible = false;
+          return;
+        }
+        else
+        {
+          groupAlerts[index].Visible = true;
+        }
+
+        string strSQL = "SELECT var_text FROM tb_appsettings WHERE var_app = :app and var_appid = :appid and var_appset = :appset";
+        dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "app", clsDBConnection.ParamTypes.ParamString, "QDIAlerts");
+        dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "appid", clsDBConnection.ParamTypes.ParamString, "Types");
+        dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "appset", clsDBConnection.ParamTypes.ParamString, alertType);
+
+        object result = dbQDI.GetSingleValue(strSQL);
+
+        lblDisplayNames[index].Text = result?.ToString();
+
+        List<Alert> alerts = GetAlerts(alertType);
+        lblAlertCounts[index].Text = alerts.Count.ToString();
+        lblAlertContents[index].Text = "";
+
+        if (alerts.Count > 0)
+        {
+          groupAlerts[index].BackColor = Color.FromArgb(255, 44, 23);
+          foreach (Alert alert in alerts)
+          {
+            string shortDescription = alert.description.Length > 50
+            ? alert.description.Substring(0, 50) + "..."
+            : alert.description;
+
+            lblAlertContents[index].Text += $"{alert.concept}{alert.store} - {shortDescription}\r\n";
+          }
+        }
+        else
+        {
+          groupAlerts[index].BackColor = Color.ForestGreen;
+        }
+      }
+      catch (Exception)
+      {
+        foreach (var panel in groupAlerts)
+        {
+          panel.BackColor = Color.Gray;
+        }
+      }
+    }
+
+    private List<(string code, string label)> GetAlertOptionsFromDatabase()
+    {
+      string strSQL = "SELECT var_appset, var_text FROM tb_appsettings WHERE var_app = :app AND var_appid = :appid";
+      dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "app", clsDBConnection.ParamTypes.ParamString, "QDIAlerts");
+      dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "appid", clsDBConnection.ParamTypes.ParamString, "Types");
+
+      DataTable dt = dbQDI.GetDataTable(strSQL);
+
+      List<(string code, string label)> alertOptions = new List<(string code, string label)>();
+
+      foreach (DataRow row in dt.Rows)
+      {
+        string code = row["var_appset"].ToString();
+        string label = row["var_text"].ToString();
+        alertOptions.Add((code, label));
+      }
+
+      return alertOptions;
+    }
+
+    private void PopulateAlertTypeMenu(ToolStripMenuItem parentMenu, int row)
+    {
+      parentMenu.DropDownItems.Clear();
+
+      var alertOptions = GetAlertOptionsFromDatabase();
+
+      foreach (var (code, label) in alertOptions)
+      {
+        ToolStripMenuItem item = new ToolStripMenuItem(label);
+        item.Tag = (row, code); 
+        item.Click += DynamicAlertTypeMenuItem_Click;
+        parentMenu.DropDownItems.Add(item);
+      }
+
+      if (row != 4)
+      {
+        ToolStripMenuItem noneItem = new ToolStripMenuItem("None");
+        noneItem.Tag = (row, "NONE");
+        noneItem.Click += DynamicAlertTypeMenuItem_Click;
+        parentMenu.DropDownItems.Add(noneItem);
+      }
+    }
+
+    private void DynamicAlertTypeMenuItem_Click(object sender, EventArgs e)
+    {
+      if (sender is ToolStripMenuItem clickedItem && clickedItem.Tag is ValueTuple<int, string> tag)
+      {
+        int row = tag.Item1;
+        string alertCode = tag.Item2;
+
+        ToolStripDropDownItem parentMenu = (ToolStripDropDownItem)clickedItem.OwnerItem;
+
+        foreach (ToolStripMenuItem item in parentMenu.DropDownItems)
+        {
+          item.Checked = false;
+        }
+
+        clickedItem.Checked = true;
+
+        switch (row)
+        {
+          case 1: AlertTypeRow1 = alertCode; break;
+          case 2: AlertTypeRow2 = alertCode; break;
+          case 3: AlertTypeRow3 = alertCode; break;
+          case 4: AlertTypeRow4 = alertCode; break;
+        }
+        ReloadAlerts(row);
+      }
+    }
+
+    private List<Alert> GetAlerts(string alertType)
+    {
+      List<Alert> lst = new List<Alert>();
+
+      string strSQL = "SELECT * FROM TB_ALERTS ta, TB_CONCEPTS tc, tb_stores ts "
+          + "WHERE (ta.DTE_END > sysdate OR ta.DTE_END is null) "
+          + "AND ta.var_alerttype = :alerttype "
+          + "AND ta.NUM_CONCEPT = tc.NUM_CONCEPTTYPE "
+          + "AND ta.NUM_STORE = ts.NUM_STORENUMBER "
+          + "AND ts.DTE_CLOSE is null AND ts.DTE_OPEN <= (sysdate - 2) "
+          + "ORDER BY ta.dte_Start";
+
+      dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "alerttype", clsDBConnection.ParamTypes.ParamString, alertType, 2);
+      DataTable dt = dbQDI.GetDataTable(strSQL);
+
+      foreach (DataRow row in dt.Rows)
+      {
+        Alert alert = new Alert
+        {
+          concept = row["var_conceptnameshort"].ToString(),
+          store = row["num_store"].ToString(),
+          dateStart = Convert.ToDateTime(row["dte_start"]),
+          title = row["var_title"].ToString(),
+          description = row["var_description"].ToString()
+        };
+
+        lst.Add(alert);
+      }
+      return lst;
+    }
+
+    private void Row1AlertTypeMenuItem_Click(object sender, EventArgs e)
+    {
+      if (sender is ToolStripMenuItem menuItem)
+      {
+        POSOfflineToolStripMenuItem1.Checked = false;
+        heartbeatToolStripMenuItem1.Checked = false;
+        serverIssuesToolStripMenuItem1.Checked = false;
+        servicesOfflineToolStripMenuItem1.Checked = false;
+        noneToolStripMenuItem1.Checked = false;
+
+        // Check the selected item
+        menuItem.Checked = true;
+
+        AlertTypeRow1 = GetAlertTypeFromMenuItem(menuItem.Name, 1);
+        ReloadAlerts(1);
+      }
+    }
+
+    private void Row2AlertTypeMenuItem_Click(object sender, EventArgs e)
+    {
+      if (sender is ToolStripMenuItem menuItem)
+      {
+        POSOfflineToolStripMenuItem2.Checked = false;
+        heartbeatToolStripMenuItem2.Checked = false;
+        serverIssuesToolStripMenuItem2.Checked = false;
+        servicesOfflineToolStripMenuItem2.Checked = false;
+        noneToolStripMenuItem2.Checked = false;
+
+        menuItem.Checked = true;
+
+        AlertTypeRow2 = GetAlertTypeFromMenuItem(menuItem.Name, 2);
+        ReloadAlerts(2);
+      }
+    }
+
+    private void Row3AlertTypeMenuItem_Click(object sender, EventArgs e)
+    {
+      if (sender is ToolStripMenuItem menuItem)
+      {
+        POSOfflineToolStripMenuItem3.Checked = false;
+        heartbeatToolStripMenuItem3.Checked = false;
+        serverIssuesToolStripMenuItem3.Checked = false;
+        servicesOfflineToolStripMenuItem3.Checked = false;
+        noneToolStripMenuItem3.Checked = false;
+
+        menuItem.Checked = true;
+
+        AlertTypeRow3 = GetAlertTypeFromMenuItem(menuItem.Name, 3);
+        ReloadAlerts(3);
+      }
+    }
+
+    private void Row4AlertTypeMenuItem_Click(object sender, EventArgs e)
+    {
+      if (sender is ToolStripMenuItem menuItem)
+      {
+        POSOfflineToolStripMenuItem4.Checked = false;
+        heartbeatToolStripMenuItem4.Checked = false;
+        serverIssuesToolStripMenuItem4.Checked = false;
+        servicesOfflineToolStripMenuItem4.Checked = false;
+
+        menuItem.Checked = true;
+
+        AlertTypeRow4 = GetAlertTypeFromMenuItem(menuItem.Name, 4);
+        ReloadAlerts(4);
+      }
+    }
+
+    private string GetAlertTypeFromMenuItem(string menuItemName, int row)
+    {
+      if (menuItemName.Contains("POSOffline")) return "p";
+      if (menuItemName.Contains("heartbeat")) return "HB";
+      if (menuItemName.Contains("serverIssues")) return "S";
+      if (menuItemName.Contains("servicesOffline")) return "SV";
+      if (menuItemName.Contains("none")) return "NONE";
+      return "p";
+    }
+
+    private void Form1_MouseDown(object sender, MouseEventArgs e)
+    {
+      if (e.Button == MouseButtons.Left)
+      {
+        // Prevent dragging if the cursor is a splitter move (up/down or left/right)
+        if (Cursor.Current == Cursors.VSplit || Cursor.Current == Cursors.HSplit)
+        {
+          return; // Do not initiate drag
+        }
+
+        ReleaseCapture();
+        SendMessage(this.Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+      }
+    }
+
+
+    private void EnableDrag(Control control)
+    {
+      // Don't attach drag to controls that are SplitContainers, SplitterPanels, or Splitters
+      bool isDraggable =
+          !(control is SplitContainer) &&
+          !(control.GetType().FullName == "System.Windows.Forms.SplitterPanel") &&
+          !(control is Splitter);
+
+      if (isDraggable)
+      {
+        control.MouseDown += Form1_MouseDown;
+      }
+
+      // If it's a SplitContainer, manually recurse into Panel1 and Panel2
+      if (control is SplitContainer sc)
+      {
+        EnableDrag(sc.Panel1);
+        EnableDrag(sc.Panel2);
+      }
+
+      // Recurse into all children (including for other container types)
+      foreach (Control child in control.Controls)
+      {
+        EnableDrag(child);
+      }
+    }
+
+    private void Form1_KeyDown(object sender, KeyEventArgs e)
+    {
+      if (e.KeyCode == Keys.Escape)
+      {
+        Application.Exit();
+      }
+    }
+  }
+}
