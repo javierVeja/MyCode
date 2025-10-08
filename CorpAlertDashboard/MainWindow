@@ -1,0 +1,248 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using QDICorpAlertCenter.Models;
+using System.Data;
+using QDI;
+
+namespace QDICorpAlertCenter
+{
+  public struct SortBy
+  {
+    public string Name { get; set; }
+    public string Value { get; set; }
+  }
+
+  public partial class MainWindow : Window
+  {
+    private static clsDBConnection dbQDI = new clsDBConnection(clsDBConnection.DBs.QDIProd);
+    private List<Alerts> lst = new List<Alerts>();
+    private bool bradMode = false;
+    public MainWindow()
+    {
+      InitializeComponent();
+    }
+
+    private void MainForm_Loaded(object sender, RoutedEventArgs e)
+    {
+      //create timer to update every minute
+      //bool bradMode = false;
+
+      System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+      dispatcherTimer.Tick += dispatcherTimer_Tick;
+      dispatcherTimer.Interval = new TimeSpan(0, 0, 10);
+      dispatcherTimer.Start();
+
+      PopulateCbo();
+    }
+
+
+    private void dispatcherTimer_Tick(object sender, EventArgs e)
+    {
+      try
+      {
+        lst = getAlerts();
+
+        SortBy sb = (SortBy)cbo_AlertSort.SelectedItem;
+
+        if (sb.Value != "")
+        {
+          lst = lst.Where(x => x.level == sb.Value).ToList();
+        }
+
+        lst = lst.OrderBy(x => x.startDate).ToList();
+
+        lblAlerts.Content = "ALERTS " + lst.Count;
+
+        listView.ItemsSource = lst;
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
+    }
+
+    private void listView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+
+      if (listView.SelectedIndex != -1)
+      {
+        Alerts alert = (Alerts)listView.SelectedItems[0];
+
+        this.lblDescriptionContent.Content = alert.description;
+        //this.lblDescriptionContent.FontSize = 22; 
+
+      }
+
+    }
+
+
+
+    public static List<Alerts> getAlerts()
+    {
+      List<Alerts> lst = new List<Alerts>();
+
+      DataTable dt = new DataTable();
+
+
+      string strSQL = "SELECT * FROM TB_ALERTS ta, TB_CONCEPTS tc, tb_stores ts "
+                    + "WHERE (DTE_END > sysdate OR DTE_END is null) "
+                    + "AND ta.NUM_CONCEPT = tc.NUM_CONCEPTTYPE "
+                    + "AND ta.NUM_CONCEPT = ts.NUM_CONCEPTTYPE "
+                    + "AND ta.NUM_STORE = ts.NUM_STORENUMBER "
+                    + "AND (ts.DTE_CLOSE > sysdate OR ts.DTE_CLOSE is null) "
+                    + "AND ts.DTE_OPEN <= (sysdate + 2)";
+
+      using (clsDBConnection dbconn = new clsDBConnection(clsDBConnection.DBs.QDIProd))
+      {
+
+        dt = dbconn.GetDataTable(strSQL);
+
+      }
+
+
+      foreach (DataRow row in dt.Rows)
+      {
+
+        Alerts alert = new Alerts();
+
+        alert.title = row["var_title"].ToString();
+        alert.concept = row["var_conceptnameshort"].ToString();
+        alert.store = row["num_store"].ToString();
+        alert.description = row["var_description"].ToString();
+        alert.startDate = row["dte_start"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(row["dte_start"]);
+        alert.endDate = row["dte_end"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(row["dte_end"]);
+        alert.level = row["var_alerttype"].ToString();
+
+
+        lst.Add(alert);
+
+      }
+      return lst;
+    }
+
+    private void lblAlerts_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+      if (bradMode == false)
+      {
+
+        MainForm.Background = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+        listView.Background = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+        lblAlerts.Foreground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+        lblDescription.Foreground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+        lblDescriptionContent.Foreground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+
+        listView.Foreground = new SolidColorBrush(Color.FromRgb(11, 151, 30));
+
+        bradMode = true;
+      }
+      else
+      {
+
+        MainForm.Background = new SolidColorBrush(Color.FromRgb(216, 216, 216));
+        listView.Background = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+        lblAlerts.Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+        lblDescription.Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+        lblDescriptionContent.Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+
+        listView.Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+
+
+        bradMode = false;
+      }
+
+
+    }
+
+
+    private void PopulateCbo()
+    {
+      cbo_AlertSort.Items.Clear();
+      cbo_AlertSort.Items.Add(new SortBy { Name = "All", Value = "" });
+
+      
+
+      string strSQL = "SELECT var_appset,  var_text FROM tb_appsettings WHERE var_app = :app and var_appid = :appid ";
+
+      dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "app", clsDBConnection.ParamTypes.ParamString, "QDIAlerts");
+      dbQDI.AddParam(clsDBConnection.SQLTypes.SQLSelect, "appid", clsDBConnection.ParamTypes.ParamString, "Types");
+
+
+      DataTable dt = dbQDI.GetDataTable(strSQL);
+
+      foreach (DataRow row in dt.Rows)
+      {
+        cbo_AlertSort.Items.Add(new SortBy { Name = row["var_text"].ToString(), Value = row["var_appset"].ToString() });
+
+      }
+
+      cbo_AlertSort.SelectedIndex = 0;
+    }
+
+    private void cbo_AlertSort_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      dispatcherTimer_Tick(sender, e);
+    }
+    private DataTemplate CreateCellTemplate(string bindingPath, double fontSize)
+    {
+      var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+      textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding(bindingPath));
+      textBlockFactory.SetValue(TextBlock.FontSizeProperty, fontSize);
+
+      DataTemplate template = new DataTemplate();
+      template.VisualTree = textBlockFactory;
+      return template;
+    }
+
+    private void fontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      ComboBoxItem selectedItem = fontSizeComboBox.SelectedItem as ComboBoxItem;
+      if (selectedItem != null && int.TryParse(selectedItem.Content.ToString(), out int selectedSize))
+      {
+        // Create a new GridView and set it to the ListView
+        GridView gridView = new GridView();
+        listView.View = gridView;
+
+        // Add columns to the GridView with the selected font size
+        GridViewColumn storeColumn = new GridViewColumn();
+        storeColumn.Header = "Store";
+        storeColumn.CellTemplate = CreateCellTemplate("store", selectedSize);
+        gridView.Columns.Add(storeColumn);
+
+        GridViewColumn titleColumn = new GridViewColumn();
+        titleColumn.Header = "Title";
+        titleColumn.CellTemplate = CreateCellTemplate("title", selectedSize);
+        gridView.Columns.Add(titleColumn);
+
+        GridViewColumn dateColumn = new GridViewColumn();
+        dateColumn.Header = "Date";
+        dateColumn.Width = 150;
+        dateColumn.CellTemplate = CreateCellTemplate("startDate", selectedSize);
+        gridView.Columns.Add(dateColumn);
+
+        GridViewColumn descriptionColumn = new GridViewColumn();
+        descriptionColumn.Header = "Description";
+        descriptionColumn.CellTemplate = CreateCellTemplate("description", selectedSize);
+        gridView.Columns.Add(descriptionColumn);
+
+        // Optionally, update the label font size or any other UI element
+        lblDescriptionContent.FontSize = selectedSize;
+      }
+      else
+      {
+        MessageBox.Show("Please select a valid font size.");
+      }
+    }
+  }
+}
+
