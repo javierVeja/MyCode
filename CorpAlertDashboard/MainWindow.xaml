@@ -1,0 +1,34 @@
+<Window x:Class="QDICorpAlertCenter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alert Center" Height="510" Width="727" WindowStyle="SingleBorderWindow" ResizeMode="CanResizeWithGrip" Icon="Bell.ico" WindowStartupLocation="CenterScreen"
+        MinHeight="510" MinWidth="727">
+    <Grid x:Name="MainForm" Background="#FFD8D8D8" Loaded="MainForm_Loaded">
+
+        <Label x:Name="lblAlerts" Content="ALERTS" Margin="0,0,21,423.667" FontSize="36" MouseDoubleClick="lblAlerts_MouseDoubleClick" HorizontalContentAlignment="Center"/>
+        <ComboBox x:Name="fontSizeComboBox" Margin="10,21,0,0" SelectionChanged="fontSizeComboBox_SelectionChanged" VerticalAlignment="Top" Width="53" HorizontalAlignment="Left">
+            <ComboBoxItem Content="12"/>
+            <ComboBoxItem Content="25"/>
+            <ComboBoxItem Content="50"/>
+            <ComboBoxItem Content="75"/>
+            <ComboBoxItem Content="100"/>
+        </ComboBox>
+
+        <ListView x:Name="listView" Margin="10,57,9.857,165.857" SelectionChanged="listView_SelectionChanged" SelectedIndex="0" SelectionMode="Single">
+
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Store" DisplayMemberBinding="{Binding store}"/>
+                    <GridViewColumn Header="Title" DisplayMemberBinding="{Binding title}"/>
+                    <GridViewColumn Header="Date" DisplayMemberBinding="{Binding startDate}" Width="150"/>
+                    <GridViewColumn Header="Description" DisplayMemberBinding="{Binding description}"/>
+                </GridView>
+            </ListView.View>
+
+        </ListView>
+        <Label x:Name="lblDescription" Content="Description:" HorizontalAlignment="Left" Margin="10,0,0,134.857" FontWeight="Bold" Height="31" VerticalAlignment="Bottom" Width="80"/>
+        <Label x:Name="lblDescriptionContent" Content="" Margin="10,0,9.857,9.857" VerticalAlignment="Bottom" Height="125"/>
+        <ComboBox x:Name="cbo_AlertSort" DisplayMemberPath="Name" Margin="0,21,36,0" SelectionChanged="cbo_AlertSort_SelectionChanged" Height="22" VerticalAlignment="Top" HorizontalAlignment="Right" Width="225"/>
+
+    </Grid>
+</Window>
