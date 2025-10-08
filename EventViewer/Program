@@ -1,1 +1,158 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Diagnostics;
+using System.Configuration;
+using System.IO;
 
+namespace QDI
+{
+  class Program
+  {
+    private const string APP_NAME = "EventViewerCheck";
+    private static string RootProgramFilesLocation = (Directory.Exists(@"C:\QDI\BK")) ? @"C:\QDI\BK\" : @"C:\QDI\FS\";
+    static void Main(string[] args)
+    {
+      string sourceName = ConfigurationManager.AppSettings["sourceNames"];
+      string eventId = ConfigurationManager.AppSettings["eventIds"];
+
+      List<string> eventInfo = sourceName.Split(';').ToList();
+
+      List<string> logNames = new List<string> { "System", "Application" }; // Look in the Application log
+
+      try
+      {
+        bool eventFound = false;
+
+        var allEntries = logNames.SelectMany(logName => new EventLog(logName).Entries.Cast<EventLogEntry>()).ToList();
+
+        foreach (string item in eventInfo)
+        {
+          string eventName = item.Split('|')[0];
+          string[] arEventID = item.Split('|')[1].Split(',');
+
+
+          foreach (string eventID in arEventID)
+          {
+            EventLogEntry entry = allEntries.Where(x => x.Source == eventName && x.EventID.ToString() == eventID).FirstOrDefault();
+
+            LogThat(eventName + " " + eventID);
+
+            if (entry == null)
+            {
+              AlertCheck(eventID, eventName);
+              continue;
+            }
+            string reason = entry.Message;
+
+            //Do not have access to event Kernel-Power 42 Unexpected Shutdown message therefore I hardcoded if the code is 41 for the event
+            if (entry.EventID == 41)
+            {
+              reason = $"Unexpected Shutdown detected: {entry.TimeGenerated}";
+            }
+
+            Event eventviewer = new Event
+            {
+              Name = entry.Source,
+              LastUpdated = entry.TimeGenerated,
+              Reason = reason,
+              EventId = entry.EventID
+            };
+
+            LogThat($"{entry.Source}, Message: {reason}, Event ID: {entry.EventID} Time: {entry.TimeGenerated}", true);
+
+            InsertEventViewerStatus(eventviewer);
+
+            eventFound = true; // Set flag to true          
+          }
+        }
+        if (!eventFound)
+        {
+          LogThat("No event found", true);
+        }
+      }
+      catch (Exception ex)
+      {
+        LogThat(ex.ToString());
+      }
+    }
+
+    private static bool InsertEventViewerStatus(Event thisEvent)
+    {
+      clsDBConnectionODBC dbStoreSettings = new clsDBConnectionODBC(RootProgramFilesLocation + @"Data\StoreData.mdb");
+
+      try
+      {
+
+        string selectSQL = "SELECT COUNT(var_servicename) FROM tb_EventViewerStatus WHERE var_servicename = '"
+                           + thisEvent.Name + "' AND var_eventid = '"
+                           + thisEvent.EventId + "';";
+
+        int intSelect = Convert.ToInt32(dbStoreSettings.GetSingleValue(selectSQL));
+
+        if (intSelect == 0)
+        {
+          string insertSQL = "INSERT INTO tb_EventViewerStatus VALUES("
+                                   + "'" + thisEvent.Name + "', "
+                                   + "#" + thisEvent.LastUpdated + "#, "
+                                   + "'" + thisEvent.EventId + "', "
+                                   + "'" + thisEvent.Reason + "');";
+
+          dbStoreSettings.ExecuteSQL(insertSQL);
+          dbStoreSettings.Commit();
+        }
+      }
+      catch (Exception ex)
+      {
+        dbStoreSettings.RollBack();
+        LogThat(ex.ToString());
+        return false;
+      }
+      return true;
+    }
+    private static void AlertCheck(string eventID, string sourceName)
+    {
+      try
+      {
+        clsDBConnectionODBC dbStoreSettings1 = new clsDBConnectionODBC(RootProgramFilesLocation + @"Data\StoreData.mdb");
+        string deleteSQL = "DELETE FROM tb_EventViewerStatus WHERE var_servicename = '"
+                         + sourceName + "' AND var_eventid = '"
+                         + eventID + "';";
+
+        dbStoreSettings1.ExecuteSQL(deleteSQL);
+        dbStoreSettings1.Commit();
+
+        LogThat("deleted MDB with: " + deleteSQL);
+      }
+      catch (Exception ex)
+      {
+        LogThat(ex.ToString());
+      }
+    }
+
+    private static void LogThat(string Message, bool IsError = false)
+    {// LOGGING FOR THAT 
+      string debugFlag = ConfigurationManager.AppSettings["Debug"];
+
+      if ((debugFlag != null && debugFlag.ToUpper().StartsWith("T")) || IsError)
+      {
+        string logFilePathName = @"C:\QDI\BK\Data\logs\" + APP_NAME + "_" + DateTime.Today.ToString("yyyy-MM-dd") + ".log";
+
+        if (!File.Exists(logFilePathName))
+        {
+          using (TextWriter tw = new StreamWriter(new FileStream(logFilePathName, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite)))
+          {
+            tw.WriteLine(DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.ffff") + " : " + Message);
+          }
+        }
+        else
+        {
+          using (TextWriter tw = new StreamWriter(new FileStream(logFilePathName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+          {
+            tw.WriteLine(DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.ffff") + " : " + Message);
+          }
+        }
+      }
+    }
+  }
+}
