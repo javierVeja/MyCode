@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitTrack</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+}
+
+body {
+    background: #f5f5f7;
+    color: #1d1d1f;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+header p {
+    color: #6e6e73;
+    margin-top: 10px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 20px;
+}
+
+.card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+
+.card h2 {
+    margin-bottom: 15px;
+}
+
+.value {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.progress {
+    margin-top: 15px;
+    height: 12px;
+    background: #e5e5ea;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0;
+}
+
+.calories {
+    background: linear-gradient(90deg,#0071e3,#5ac8fa);
+}
+
+.protein {
+    background: linear-gradient(90deg,#34c759,#30d158);
+}
+
+.weight {
+    background: linear-gradient(90deg,#ff9500,#ffcc00);
+}
+
+.form {
+    margin-top: 30px;
+}
+
+.form input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #d2d2d7;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    background: #0071e3;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+button:hover {
+    background: #0062c4;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+}
+
+th {
+    color: #6e6e73;
+}
+
+tr {
+    border-bottom: 1px solid #e5e5ea;
+}
+
+.history-card {
+    margin-top: 30px;
+}
+
+.goal-info {
+    color: #6e6e73;
+    margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+<h1>FitTrack</h1>
+<p>Calories • Protein • Weight</p>
+</header>
+
+<div class="grid">
+
+<div class="card">
+<h2>Calories</h2>
+<div class="value" id="caloriesDisplay">0</div>
+<div class="goal-info">Goal: 2800</div>
+
+<div class="progress">
+<div class="progress-fill calories" id="caloriesBar"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Protein</h2>
+<div class="value" id="proteinDisplay">0g</div>
+<div class="goal-info">Goal: 160g</div>
+
+<div class="progress">
+<div class="progress-fill protein" id="proteinBar"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Weight</h2>
+<div class="value" id="weightDisplay">0 lb</div>
+<div class="goal-info">Current Weight</div>
+
+<div class="progress">
+<div class="progress-fill weight" id="weightBar"></div>
+</div>
+</div>
+
+</div>
+
+<div class="card form">
+
+<h2>Add Daily Data</h2>
+
+<input type="number" id="caloriesInput" placeholder="Calories">
+
+<input type="number" id="proteinInput" placeholder="Protein (g)">
+
+<input type="number" id="weightInput" placeholder="Weight (lb)">
+
+<button onclick="saveData()">Save Entry</button>
+
+</div>
+
+<div class="card history-card">
+
+<h2>History</h2>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Calories</th>
+<th>Protein</th>
+<th>Weight</th>
+</tr>
+</thead>
+
+<tbody id="historyTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let calorieGoal = 2800;
+let proteinGoal = 160;
+
+let entries = JSON.parse(localStorage.getItem("fittrack")) || [];
+
+function saveData(){
+
+const calories = document.getElementById("caloriesInput").value;
+const protein = document.getElementById("proteinInput").value;
+const weight = document.getElementById("weightInput").value;
+
+if(!calories || !protein || !weight){
+alert("Please fill all fields.");
+return;
+}
+
+const entry = {
+date: new Date().toLocaleDateString(),
+calories,
+protein,
+weight
+};
+
+entries.unshift(entry);
+
+localStorage.setItem(
+"fittrack",
+JSON.stringify(entries)
+);
+
+document.getElementById("caloriesInput").value = "";
+document.getElementById("proteinInput").value = "";
+document.getElementById("weightInput").value = "";
+
+loadData();
+}
+
+function loadData(){
+
+const table = document.getElementById("historyTable");
+
+table.innerHTML = "";
+
+if(entries.length > 0){
+
+const latest = entries[0];
+
+document.getElementById("caloriesDisplay").innerText =
+latest.calories;
+
+document.getElementById("proteinDisplay").innerText =
+latest.protein + "g";
+
+document.getElementById("weightDisplay").innerText =
+latest.weight + " lb";
+
+document.getElementById("caloriesBar").style.width =
+Math.min((latest.calories / calorieGoal) * 100,100) + "%";
+
+document.getElementById("proteinBar").style.width =
+Math.min((latest.protein / proteinGoal) * 100,100) + "%";
+
+document.getElementById("weightBar").style.width =
+Math.min((latest.weight / 250) * 100,100) + "%";
+}
+
+entries.forEach(entry => {
+
+table.innerHTML += `
+<tr>
+<td>${entry.date}</td>
+<td>${entry.calories}</td>
+<td>${entry.protein}g</td>
+<td>${entry.weight} lb</td>
+</tr>
+`;
+
+});
+
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
