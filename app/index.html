@@ -74,6 +74,99 @@ function toggleTheme(){data.theme=data.theme==='dark'?'light':'dark';document.do
 function exportCSV(){let rows=[['Date','Meal','Food','Calories','Protein','Carbs','Fat','Weight']];Object.keys(data.logs).sort().forEach(d=>{let foods=data.logs[d].foods;if(!foods.length)rows.push([d,'','','','','','',data.weights[d]||'']);foods.forEach((f,i)=>rows.push([d,f.meal,f.name,f.calories,f.protein,f.carbs,f.fat,i===0?(data.weights[d]||''):'']))});Object.keys(data.weights).filter(d=>!data.logs[d]).forEach(d=>rows.push([d,'','','','','','',data.weights[d]]));let csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fittrack-data.csv';a.click();URL.revokeObjectURL(a.href)}
 function clearAll(){if(confirm('Delete all food, weight, and goal data?')){localStorage.removeItem('fittrack-pro');data=structuredClone(defaultData);dateEl.value=today();render()}}
 function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function renderWeeklyChart() {
+
+    const last7Days = [];
+    const scores = [];
+
+    for (let i = 6; i >= 0; i--) {
+
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+
+        let dateKey = date.toISOString().split("T")[0];
+
+        last7Days.push(
+            date.toLocaleDateString('en-US', {
+                weekday: 'short'
+            })
+        );
+
+        let log = data.logs[dateKey];
+
+        if (!log || !log.foods.length) {
+            scores.push(0);
+            continue;
+        }
+
+        let totals = {
+            calories: 0,
+            protein: 0
+        };
+
+        log.foods.forEach(food => {
+            totals.calories += Number(food.calories || 0);
+            totals.protein += Number(food.protein || 0);
+        });
+
+        let calorieScore =
+            Math.min(
+                totals.calories / data.goals.calories,
+                1
+            ) * 50;
+
+        let proteinScore =
+            Math.min(
+                totals.protein / data.goals.protein,
+                1
+            ) * 50;
+
+        scores.push(
+            Math.round(
+                calorieScore + proteinScore
+            )
+        );
+    }
+
+    const ctx =
+        document.getElementById("weeklyChart");
+
+    if (window.weeklyGraph) {
+        window.weeklyGraph.destroy();
+    }
+
+    window.weeklyGraph = new Chart(ctx, {
+
+        type: 'line',
+
+        data: {
+            labels: last7Days,
+
+            datasets: [{
+                label: 'Goal Score %',
+                data: scores,
+
+                borderColor: '#0071e3',
+                backgroundColor: 'rgba(0,113,227,0.15)',
+
+                tension: 0.4,
+                fill: true
+            }]
+        },
+
+        options: {
+
+            responsive: true,
+
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100
+                }
+            }
+        }
+    });
+}
 render();
 </script>
 </body>
