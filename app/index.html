@@ -76,7 +76,14 @@ function clearAll(){if(confirm('Delete all food, weight, and goal data?')){local
 function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function renderWeeklyChart() {
 
-    const last7Days = [];
+    const canvas = document.getElementById("weeklyChart");
+
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     const scores = [];
 
     for (let i = 6; i >= 0; i--) {
@@ -84,13 +91,8 @@ function renderWeeklyChart() {
         let date = new Date();
         date.setDate(date.getDate() - i);
 
-        let dateKey = date.toISOString().split("T")[0];
-
-        last7Days.push(
-            date.toLocaleDateString('en-US', {
-                weekday: 'short'
-            })
-        );
+        let dateKey =
+            date.toISOString().split("T")[0];
 
         let log = data.logs[dateKey];
 
@@ -99,72 +101,76 @@ function renderWeeklyChart() {
             continue;
         }
 
-        let totals = {
-            calories: 0,
-            protein: 0
-        };
+        let calories = 0;
+        let protein = 0;
 
         log.foods.forEach(food => {
-            totals.calories += Number(food.calories || 0);
-            totals.protein += Number(food.protein || 0);
+            calories += Number(food.calories || 0);
+            protein += Number(food.protein || 0);
         });
 
-        let calorieScore =
+        let caloriePercent =
             Math.min(
-                totals.calories / data.goals.calories,
+                calories / data.goals.calories,
                 1
-            ) * 50;
+            );
 
-        let proteinScore =
+        let proteinPercent =
             Math.min(
-                totals.protein / data.goals.protein,
+                protein / data.goals.protein,
                 1
-            ) * 50;
+            );
 
         scores.push(
-            Math.round(
-                calorieScore + proteinScore
-            )
+            ((caloriePercent + proteinPercent) / 2)
+            * 100
         );
     }
 
-    const ctx =
-        document.getElementById("weeklyChart");
+    ctx.strokeStyle = "#0071e3";
+    ctx.lineWidth = 3;
 
-    if (window.weeklyGraph) {
-        window.weeklyGraph.destroy();
-    }
+    ctx.beginPath();
 
-    window.weeklyGraph = new Chart(ctx, {
+    scores.forEach((score, index) => {
 
-        type: 'line',
+        const x =
+            (index / 6) *
+            (canvas.width - 40) +
+            20;
 
-        data: {
-            labels: last7Days,
+        const y =
+            canvas.height -
+            ((score / 100) *
+            (canvas.height - 40) + 20);
 
-            datasets: [{
-                label: 'Goal Score %',
-                data: scores,
+        if (index === 0)
+            ctx.moveTo(x, y);
+        else
+            ctx.lineTo(x, y);
 
-                borderColor: '#0071e3',
-                backgroundColor: 'rgba(0,113,227,0.15)',
+    });
 
-                tension: 0.4,
-                fill: true
-            }]
-        },
+    ctx.stroke();
 
-        options: {
+    scores.forEach((score, index) => {
 
-            responsive: true,
+        const x =
+            (index / 6) *
+            (canvas.width - 40) +
+            20;
 
-            scales: {
-                y: {
-                    min: 0,
-                    max: 100
-                }
-            }
-        }
+        const y =
+            canvas.height -
+            ((score / 100) *
+            (canvas.height - 40) + 20);
+
+        ctx.fillStyle = "#0071e3";
+
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+
     });
 }
 render();
