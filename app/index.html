@@ -2,316 +2,79 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FitTrack</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<title>FitTrack Pro</title>
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-}
-
-body {
-    background: #f5f5f7;
-    color: #1d1d1f;
-    min-height: 100vh;
-    padding: 40px 20px;
-}
-
-.container {
-    max-width: 1000px;
-    margin: auto;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-header h1 {
-    font-size: 3rem;
-    font-weight: 700;
-}
-
-header p {
-    color: #6e6e73;
-    margin-top: 10px;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-    gap: 20px;
-}
-
-.card {
-    background: rgba(255,255,255,0.8);
-    backdrop-filter: blur(20px);
-    border-radius: 24px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.08);
-}
-
-.card h2 {
-    margin-bottom: 15px;
-}
-
-.value {
-    font-size: 2.5rem;
-    font-weight: bold;
-}
-
-.progress {
-    margin-top: 15px;
-    height: 12px;
-    background: #e5e5ea;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    width: 0;
-}
-
-.calories {
-    background: linear-gradient(90deg,#0071e3,#5ac8fa);
-}
-
-.protein {
-    background: linear-gradient(90deg,#34c759,#30d158);
-}
-
-.weight {
-    background: linear-gradient(90deg,#ff9500,#ffcc00);
-}
-
-.form {
-    margin-top: 30px;
-}
-
-.form input {
-    width: 100%;
-    padding: 14px;
-    border: 1px solid #d2d2d7;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
-button {
-    width: 100%;
-    background: #0071e3;
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-button:hover {
-    background: #0062c4;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-th, td {
-    padding: 15px;
-    text-align: left;
-}
-
-th {
-    color: #6e6e73;
-}
-
-tr {
-    border-bottom: 1px solid #e5e5ea;
-}
-
-.history-card {
-    margin-top: 30px;
-}
-
-.goal-info {
-    color: #6e6e73;
-    margin-top: 8px;
-}
+:root{--bg:#f5f5f7;--card:rgba(255,255,255,.88);--text:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--blue:#0071e3;--green:#30b85a;--orange:#ff9500;--red:#ff3b30;--purple:#af52de;--shadow:0 12px 35px rgba(0,0,0,.08)}
+[data-theme="dark"]{--bg:#000;--card:rgba(28,28,30,.9);--text:#f5f5f7;--muted:#a1a1a6;--line:#3a3a3c;--blue:#0a84ff;--green:#30d158;--orange:#ff9f0a;--red:#ff453a;--purple:#bf5af2;--shadow:0 12px 35px rgba(0,0,0,.38)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#eaf4ff 0,var(--bg) 34%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;min-height:100vh}[data-theme="dark"] body{background:radial-gradient(circle at top,#102030 0,#000 35%)}button,input,select{font:inherit}.app{max-width:1100px;margin:auto;padding:22px 16px 100px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.brand h1{margin:0;font-size:30px;letter-spacing:-1px}.brand p{margin:4px 0 0;color:var(--muted)}.icon-btn,.primary,.secondary,.danger{border:0;border-radius:14px;padding:11px 15px;cursor:pointer;font-weight:650}.icon-btn,.secondary{background:var(--card);color:var(--text);border:1px solid var(--line)}.primary{background:var(--blue);color:white}.danger{background:rgba(255,59,48,.12);color:var(--red)}.datebar{display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:20px}.datebar input{background:var(--card);color:var(--text);border:1px solid var(--line);padding:10px 12px;border-radius:14px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);backdrop-filter:blur(22px);border:1px solid rgba(128,128,128,.16);border-radius:24px;padding:20px;box-shadow:var(--shadow)}.summary-card h3{margin:0;color:var(--muted);font-size:14px}.big{font-size:30px;font-weight:760;margin:8px 0 4px}.sub{color:var(--muted);font-size:13px}.bar{height:9px;background:rgba(128,128,128,.18);border-radius:99px;overflow:hidden;margin-top:14px}.fill{height:100%;width:0;border-radius:99px;transition:.25s}.cal{background:linear-gradient(90deg,var(--blue),#54c7fc)}.pro{background:linear-gradient(90deg,var(--green),#64d2ff)}.carb{background:linear-gradient(90deg,var(--orange),#ffd60a)}.fat{background:linear-gradient(90deg,var(--purple),#ff2d55)}.main{display:grid;grid-template-columns:1.65fr .8fr;gap:18px;margin-top:18px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.section-title h2{margin:0;font-size:21px}.meal{border-top:1px solid var(--line);padding:16px 0}.meal:first-of-type{border-top:0}.meal-head{display:flex;justify-content:space-between;align-items:center}.meal-head h3{margin:0}.meal-total{color:var(--muted);font-size:13px}.food-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(128,128,128,.13)}.food-row:last-child{border-bottom:0}.food-name{font-weight:650}.food-macros{color:var(--muted);font-size:12px;margin-top:3px}.remove{border:0;background:transparent;color:var(--red);cursor:pointer;font-size:18px}.empty{color:var(--muted);font-size:13px;padding:10px 0}.side-stack{display:grid;gap:18px}.weight-value{font-size:36px;font-weight:760}.weight-change{font-size:14px;color:var(--muted)}.history{max-height:240px;overflow:auto;margin-top:10px}.history-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}.settings label,.modal label{display:block;color:var(--muted);font-size:13px;margin:12px 0 5px}.settings input,.modal input,.modal select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px}.button-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;padding:16px;z-index:10}.modal-backdrop.open{display:flex}.modal{width:min(520px,100%);background:var(--card);color:var(--text);border-radius:26px;padding:22px;box-shadow:0 20px 70px rgba(0,0,0,.28);max-height:90vh;overflow:auto}.modal h2{margin-top:0}.quick-foods{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.chip{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:99px;padding:8px 11px;cursor:pointer;font-size:13px}.modal-actions{display:flex;gap:10px;margin-top:18px}.modal-actions button{flex:1}.bottom-nav{display:none}@media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}.main{grid-template-columns:1fr}.app{padding-bottom:100px}}@media(max-width:520px){.grid{gap:10px}.card{padding:16px;border-radius:20px}.big{font-size:25px}.topbar{align-items:flex-start}.brand h1{font-size:27px}.desktop-actions{display:none}.bottom-nav{display:flex;position:fixed;left:12px;right:12px;bottom:12px;background:var(--card);backdrop-filter:blur(25px);border:1px solid var(--line);border-radius:20px;padding:8px;justify-content:space-around;z-index:5;box-shadow:var(--shadow)}.bottom-nav button{border:0;background:transparent;color:var(--text);padding:10px;font-weight:650}.food-row{grid-template-columns:1fr auto}.food-row .food-cals{display:none}}
 </style>
 </head>
-
 <body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><h1>FitTrack Pro</h1><p>Your daily nutrition and weight journal</p></div>
+    <div class="desktop-actions"><button class="icon-btn" onclick="toggleTheme()">◐ Theme</button></div>
+  </div>
+  <div class="datebar"><button class="icon-btn" onclick="shiftDate(-1)">‹</button><input id="logDate" type="date" onchange="render()"><button class="icon-btn" onclick="shiftDate(1)">›</button></div>
 
-<div class="container">
+  <section class="grid">
+    <div class="card summary-card"><h3>Calories</h3><div class="big"><span id="calNow">0</span> <small>/ <span id="calGoal">2800</span></small></div><div class="sub" id="calLeft">2800 remaining</div><div class="bar"><div id="calBar" class="fill cal"></div></div></div>
+    <div class="card summary-card"><h3>Protein</h3><div class="big"><span id="proNow">0</span>g <small>/ <span id="proGoal">160</span>g</small></div><div class="sub" id="proLeft">160g remaining</div><div class="bar"><div id="proBar" class="fill pro"></div></div></div>
+    <div class="card summary-card"><h3>Carbs</h3><div class="big"><span id="carbNow">0</span>g <small>/ <span id="carbGoal">300</span>g</small></div><div class="sub" id="carbLeft">300g remaining</div><div class="bar"><div id="carbBar" class="fill carb"></div></div></div>
+    <div class="card summary-card"><h3>Fat</h3><div class="big"><span id="fatNow">0</span>g <small>/ <span id="fatGoal">80</span>g</small></div><div class="sub" id="fatLeft">80g remaining</div><div class="bar"><div id="fatBar" class="fill fat"></div></div></div>
+  </section>
 
-<header>
-<h1>FitTrack</h1>
-<p>Calories • Protein • Weight</p>
-</header>
-
-<div class="grid">
-
-<div class="card">
-<h2>Calories</h2>
-<div class="value" id="caloriesDisplay">0</div>
-<div class="goal-info">Goal: 2800</div>
-
-<div class="progress">
-<div class="progress-fill calories" id="caloriesBar"></div>
-</div>
-</div>
-
-<div class="card">
-<h2>Protein</h2>
-<div class="value" id="proteinDisplay">0g</div>
-<div class="goal-info">Goal: 160g</div>
-
-<div class="progress">
-<div class="progress-fill protein" id="proteinBar"></div>
-</div>
+  <div class="main">
+    <section class="card"><div class="section-title"><h2>Food diary</h2><button class="primary" onclick="openFood()">+ Add food</button></div><div id="meals"></div></section>
+    <aside class="side-stack">
+      <section class="card"><div class="section-title"><h2>Weight</h2><button class="secondary" onclick="openWeight()">Log</button></div><div class="weight-value"><span id="currentWeight">--</span> <small>lb</small></div><div class="weight-change" id="weightChange">No weight recorded</div><div class="history" id="weightHistory"></div></section>
+      <section class="card settings"><div class="section-title"><h2>Daily goals</h2></div><label>Calories</label><input id="setCalories" type="number"><label>Protein (g)</label><input id="setProtein" type="number"><label>Carbs (g)</label><input id="setCarbs" type="number"><label>Fat (g)</label><input id="setFat" type="number"><div class="button-row"><button class="primary" onclick="saveGoals()">Save goals</button><button class="secondary" onclick="exportCSV()">Export CSV</button><button class="danger" onclick="clearAll()">Reset app</button></div></section>
+    </aside>
+  </div>
 </div>
 
-<div class="card">
-<h2>Weight</h2>
-<div class="value" id="weightDisplay">0 lb</div>
-<div class="goal-info">Current Weight</div>
+<nav class="bottom-nav"><button onclick="window.scrollTo({top:0,behavior:'smooth'})">Summary</button><button onclick="openFood()">Add Food</button><button onclick="openWeight()">Weight</button><button onclick="toggleTheme()">Theme</button></nav>
 
-<div class="progress">
-<div class="progress-fill weight" id="weightBar"></div>
-</div>
-</div>
+<div id="foodModal" class="modal-backdrop" onclick="backdropClose(event,'foodModal')"><div class="modal">
+<h2>Add food</h2><label>Meal</label><select id="mealInput"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snacks</option></select>
+<label>Food name</label><input id="foodName" placeholder="Example: Chicken breast">
+<div class="quick-foods"><button class="chip" onclick="quickFood('Oatmeal',150,5,27,3)">Oatmeal</button><button class="chip" onclick="quickFood('Chicken breast',165,31,0,4)">Chicken</button><button class="chip" onclick="quickFood('White rice',205,4,45,0)">Rice</button><button class="chip" onclick="quickFood('Protein shake',160,30,4,2)">Protein shake</button><button class="chip" onclick="quickFood('Greek yogurt',100,17,6,0)">Greek yogurt</button></div>
+<label>Calories</label><input id="foodCalories" type="number" min="0"><label>Protein (g)</label><input id="foodProtein" type="number" min="0" step="0.1"><label>Carbs (g)</label><input id="foodCarbs" type="number" min="0" step="0.1"><label>Fat (g)</label><input id="foodFat" type="number" min="0" step="0.1">
+<div class="modal-actions"><button class="secondary" onclick="closeModal('foodModal')">Cancel</button><button class="primary" onclick="addFood()">Add food</button></div></div></div>
 
-</div>
-
-<div class="card form">
-
-<h2>Add Daily Data</h2>
-
-<input type="number" id="caloriesInput" placeholder="Calories">
-
-<input type="number" id="proteinInput" placeholder="Protein (g)">
-
-<input type="number" id="weightInput" placeholder="Weight (lb)">
-
-<button onclick="saveData()">Save Entry</button>
-
-</div>
-
-<div class="card history-card">
-
-<h2>History</h2>
-
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Calories</th>
-<th>Protein</th>
-<th>Weight</th>
-</tr>
-</thead>
-
-<tbody id="historyTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
+<div id="weightModal" class="modal-backdrop" onclick="backdropClose(event,'weightModal')"><div class="modal"><h2>Log weight</h2><label>Weight (lb)</label><input id="weightInput" type="number" min="1" step="0.1" placeholder="170.6"><div class="modal-actions"><button class="secondary" onclick="closeModal('weightModal')">Cancel</button><button class="primary" onclick="saveWeight()">Save weight</button></div></div></div>
 
 <script>
-
-let calorieGoal = 2800;
-let proteinGoal = 160;
-
-let entries = JSON.parse(localStorage.getItem("fittrack")) || [];
-
-function saveData(){
-
-const calories = document.getElementById("caloriesInput").value;
-const protein = document.getElementById("proteinInput").value;
-const weight = document.getElementById("weightInput").value;
-
-if(!calories || !protein || !weight){
-alert("Please fill all fields.");
-return;
-}
-
-const entry = {
-date: new Date().toLocaleDateString(),
-calories,
-protein,
-weight
-};
-
-entries.unshift(entry);
-
-localStorage.setItem(
-"fittrack",
-JSON.stringify(entries)
-);
-
-document.getElementById("caloriesInput").value = "";
-document.getElementById("proteinInput").value = "";
-document.getElementById("weightInput").value = "";
-
-loadData();
-}
-
-function loadData(){
-
-const table = document.getElementById("historyTable");
-
-table.innerHTML = "";
-
-if(entries.length > 0){
-
-const latest = entries[0];
-
-document.getElementById("caloriesDisplay").innerText =
-latest.calories;
-
-document.getElementById("proteinDisplay").innerText =
-latest.protein + "g";
-
-document.getElementById("weightDisplay").innerText =
-latest.weight + " lb";
-
-document.getElementById("caloriesBar").style.width =
-Math.min((latest.calories / calorieGoal) * 100,100) + "%";
-
-document.getElementById("proteinBar").style.width =
-Math.min((latest.protein / proteinGoal) * 100,100) + "%";
-
-document.getElementById("weightBar").style.width =
-Math.min((latest.weight / 250) * 100,100) + "%";
-}
-
-entries.forEach(entry => {
-
-table.innerHTML += `
-<tr>
-<td>${entry.date}</td>
-<td>${entry.calories}</td>
-<td>${entry.protein}g</td>
-<td>${entry.weight} lb</td>
-</tr>
-`;
-
-});
-
-}
-
-loadData();
-
+const MEALS=['Breakfast','Lunch','Dinner','Snacks'];
+const defaultData={goals:{calories:2800,protein:160,carbs:300,fat:80},logs:{},weights:{},theme:'light'};
+let data=load();
+function load(){try{return {...defaultData,...JSON.parse(localStorage.getItem('fittrack-pro')||'{}')}}catch{return structuredClone(defaultData)}}
+function persist(){localStorage.setItem('fittrack-pro',JSON.stringify(data))}
+function today(){let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+const dateEl=document.getElementById('logDate');dateEl.value=today();
+function dayLog(){let d=dateEl.value;data.logs[d]??={foods:[]};return data.logs[d]}
+function n(v){return Number(v)||0}
+function render(){let log=dayLog(),tot=log.foods.reduce((a,f)=>({calories:a.calories+n(f.calories),protein:a.protein+n(f.protein),carbs:a.carbs+n(f.carbs),fat:a.fat+n(f.fat)}),{calories:0,protein:0,carbs:0,fat:0});
+['calories','protein','carbs','fat'].forEach(k=>{let short={calories:'cal',protein:'pro',carbs:'carb',fat:'fat'}[k],unit=k==='calories'?'':'g';document.getElementById(short+'Now').textContent=Math.round(tot[k]);document.getElementById(short+'Goal').textContent=data.goals[k];document.getElementById(short+'Left').textContent=Math.max(0,Math.round(data.goals[k]-tot[k]))+unit+' remaining';document.getElementById(short+'Bar').style.width=Math.min(100,(tot[k]/data.goals[k])*100||0)+'%'});
+let wrap=document.getElementById('meals');wrap.innerHTML='';MEALS.forEach(meal=>{let foods=log.foods.filter(f=>f.meal===meal),cals=foods.reduce((s,f)=>s+n(f.calories),0),section=document.createElement('div');section.className='meal';section.innerHTML=`<div class="meal-head"><div><h3>${meal}</h3><div class="meal-total">${Math.round(cals)} calories</div></div><button class="secondary" onclick="openFood('${meal}')">+ Add</button></div><div>${foods.length?foods.map(f=>`<div class="food-row"><div><div class="food-name">${escapeHtml(f.name)}</div><div class="food-macros">P ${n(f.protein)}g · C ${n(f.carbs)}g · F ${n(f.fat)}g</div></div><div class="food-cals">${n(f.calories)} cal</div><button class="remove" aria-label="Remove" onclick="removeFood('${f.id}')">×</button></div>`).join(''):'<div class="empty">No food logged yet.</div>'}</div>`;wrap.appendChild(section)});renderWeight();fillSettings();persist()}
+function openFood(meal){if(meal)document.getElementById('mealInput').value=meal;document.getElementById('foodModal').classList.add('open')}
+function quickFood(name,cal,p,c,f){foodName.value=name;foodCalories.value=cal;foodProtein.value=p;foodCarbs.value=c;foodFat.value=f}
+function addFood(){let name=foodName.value.trim();if(!name||!foodCalories.value){alert('Enter a food name and calories.');return}dayLog().foods.push({id:crypto.randomUUID?crypto.randomUUID():Date.now().toString(),meal:mealInput.value,name,calories:n(foodCalories.value),protein:n(foodProtein.value),carbs:n(foodCarbs.value),fat:n(foodFat.value)});['foodName','foodCalories','foodProtein','foodCarbs','foodFat'].forEach(id=>document.getElementById(id).value='');closeModal('foodModal');render()}
+function removeFood(id){dayLog().foods=dayLog().foods.filter(f=>f.id!==id);render()}
+function openWeight(){weightInput.value=data.weights[dateEl.value]||'';document.getElementById('weightModal').classList.add('open')}
+function saveWeight(){if(!weightInput.value)return;data.weights[dateEl.value]=n(weightInput.value);closeModal('weightModal');render()}
+function renderWeight(){let entries=Object.entries(data.weights).sort((a,b)=>b[0].localeCompare(a[0])),current=data.weights[dateEl.value]??entries[0]?.[1];currentWeight.textContent=current??'--';let ordered=[...entries].sort((a,b)=>a[0].localeCompare(b[0]));if(ordered.length>1){let change=ordered.at(-1)[1]-ordered[0][1];weightChange.textContent=`${change>=0?'+':''}${change.toFixed(1)} lb overall`}else weightChange.textContent=entries.length?'First entry recorded':'No weight recorded';weightHistory.innerHTML=entries.slice(0,8).map(([d,w])=>`<div class="history-row"><span>${d}</span><strong>${w} lb</strong></div>`).join('')}
+function fillSettings(){setCalories.value=data.goals.calories;setProtein.value=data.goals.protein;setCarbs.value=data.goals.carbs;setFat.value=data.goals.fat}
+function saveGoals(){data.goals={calories:n(setCalories.value),protein:n(setProtein.value),carbs:n(setCarbs.value),fat:n(setFat.value)};render()}
+function shiftDate(days){let d=new Date(dateEl.value+'T12:00:00');d.setDate(d.getDate()+days);dateEl.value=d.toISOString().slice(0,10);render()}
+function closeModal(id){document.getElementById(id).classList.remove('open')}function backdropClose(e,id){if(e.target.id===id)closeModal(id)}
+function toggleTheme(){data.theme=data.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=data.theme;persist()}document.documentElement.dataset.theme=data.theme;
+function exportCSV(){let rows=[['Date','Meal','Food','Calories','Protein','Carbs','Fat','Weight']];Object.keys(data.logs).sort().forEach(d=>{let foods=data.logs[d].foods;if(!foods.length)rows.push([d,'','','','','','',data.weights[d]||'']);foods.forEach((f,i)=>rows.push([d,f.meal,f.name,f.calories,f.protein,f.carbs,f.fat,i===0?(data.weights[d]||''):'']))});Object.keys(data.weights).filter(d=>!data.logs[d]).forEach(d=>rows.push([d,'','','','','','',data.weights[d]]));let csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fittrack-data.csv';a.click();URL.revokeObjectURL(a.href)}
+function clearAll(){if(confirm('Delete all food, weight, and goal data?')){localStorage.removeItem('fittrack-pro');data=structuredClone(defaultData);dateEl.value=today();render()}}
+function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+render();
 </script>
-
 </body>
 </html>
