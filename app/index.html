@@ -374,9 +374,9 @@
                   <span class="dot" id="dot"></span
                   ><span id="sync">Local only</span>
                </div>
-               <button class="secondary" onclick="openProfile()">
-                  Account
-               </button>
+              <button class="secondary" id="accountButton" onclick="openAccount()">
+                   Sign in
+              </button>
                <button class="secondary" onclick="theme()">Theme</button>
             </div>
          </div>
@@ -611,7 +611,58 @@
             </div>
          </div>
       </div>
+<div
+   id="accountModal"
+   class="modal-bg"
+   onclick="outside(event,'accountModal')"
+>
+   <div class="modal fields">
+      <h2 id="accountTitle">Sign in</h2>
 
+      <p class="note" id="accountNote">
+         Sign in to save your FitTrack records to your account.
+      </p>
+
+      <label>Email</label>
+      <input
+         id="accountEmail"
+         type="email"
+         placeholder="you@example.com"
+         autocomplete="email"
+      />
+
+      <label>Password</label>
+      <input
+         id="accountPassword"
+         type="password"
+         placeholder="At least 6 characters"
+         autocomplete="current-password"
+      />
+
+      <div class="buttons">
+         <button class="primary" onclick="signIn()">
+            Sign in
+         </button>
+
+         <button class="secondary" onclick="createAccount()">
+            Create account
+         </button>
+
+         <button
+            class="secondary"
+            id="signOutButton"
+            onclick="signOut()"
+            style="display:none"
+         >
+            Sign out
+         </button>
+
+         <button class="secondary" onclick="closeM('accountModal')">
+            Close
+         </button>
+      </div>
+   </div>
+</div>
       <div
          id="profileModal"
          class="modal-bg"
@@ -634,10 +685,23 @@
          </div>
       </div>
 
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      
       <script>
-         const $ = (id) => document.getElementById(id),
-            MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"],
-            KEY = "fittrack-pro";
+
+         const SUPABASE_URL = "https://jivmgdowkdycqevlwbpa.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+   "sb_publishable_pAgAdBWzXLZ3VIJ2iKNuXg_6vRmQXws";
+
+const sb = window.supabase.createClient(
+   SUPABASE_URL,
+   SUPABASE_PUBLISHABLE_KEY,
+);
+
+const $ = (id) => document.getElementById(id),
+   MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"],
+   KEY = "fittrack-pro";
          const defaults = {
             goals: {
                calories: 2800,
@@ -960,6 +1024,136 @@
             render();
          }
 
+         let currentUser = null;
+
+async function initializeAccount() {
+   const {
+      data: { session },
+   } = await sb.auth.getSession();
+
+   currentUser = session?.user || null;
+   updateAccountDisplay();
+
+   sb.auth.onAuthStateChange((_event, session) => {
+      currentUser = session?.user || null;
+      updateAccountDisplay();
+   });
+}
+
+function updateAccountDisplay() {
+   const button = $("accountButton");
+
+   if (currentUser) {
+      button.textContent = "Account";
+      status(true, "Signed in and ready to sync");
+   } else {
+      button.textContent = "Sign in";
+      status(false, "Local only");
+   }
+}
+
+function openAccount() {
+   const signedIn = Boolean(currentUser);
+
+   $("accountTitle").textContent = signedIn
+      ? "Your account"
+      : "Sign in";
+
+   $("accountNote").textContent = signedIn
+      ? `Signed in as ${currentUser.email}`
+      : "Sign in or create an account to save your records across devices.";
+
+   $("accountEmail").value = currentUser?.email || "";
+   $("accountEmail").disabled = signedIn;
+   $("accountPassword").style.display = signedIn ? "none" : "";
+   $("signOutButton").style.display = signedIn ? "" : "none";
+
+   $("accountModal").classList.add("open");
+}
+
+async function createAccount() {
+   const email = $("accountEmail").value.trim();
+   const password = $("accountPassword").value;
+
+   if (!email) {
+      alert("Enter your email address.");
+      return;
+   }
+
+   if (password.length < 6) {
+      alert("Your password must contain at least 6 characters.");
+      return;
+   }
+
+   status(false, "Creating account...");
+
+   const { data: authData, error } = await sb.auth.signUp({
+      email,
+      password,
+   });
+
+   if (error) {
+      status(false, "Account creation failed");
+      alert(error.message);
+      return;
+   }
+
+   if (authData.session) {
+      currentUser = authData.user;
+      status(true, "Account created");
+      closeM("accountModal");
+      updateAccountDisplay();
+      openProfile(true);
+   } else {
+      status(false, "Check your email");
+      alert(
+         "Your account was created. Check your email and click the confirmation link before signing in.",
+      );
+   }
+}
+
+async function signIn() {
+   const email = $("accountEmail").value.trim();
+   const password = $("accountPassword").value;
+
+   if (!email || !password) {
+      alert("Enter your email address and password.");
+      return;
+   }
+
+   status(false, "Signing in...");
+
+   const { data: authData, error } =
+      await sb.auth.signInWithPassword({
+         email,
+         password,
+      });
+
+   if (error) {
+      status(false, "Sign in failed");
+      alert(error.message);
+      return;
+   }
+
+   currentUser = authData.user;
+
+   status(true, "Signed in");
+   closeM("accountModal");
+   updateAccountDisplay();
+}
+
+async function signOut() {
+   const { error } = await sb.auth.signOut();
+
+   if (error) {
+      alert(error.message);
+      return;
+   }
+
+   currentUser = null;
+   closeM("accountModal");
+   updateAccountDisplay();
+}
          function openProfile(first) {
             $("pTitle").textContent = first
                ? "Create your profile"
@@ -1217,7 +1411,7 @@
          });
          applyTheme();
          render();
-         initCloud();
+         initializeAccount();
          if (!data.profile.name && !window.claude)
             setTimeout(() => openProfile(true), 400);
       </script>
