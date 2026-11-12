@@ -78,7 +78,10 @@
          .app {
             max-width: 1120px;
             margin: auto;
-            padding: 22px 16px 80px;
+            padding:
+                   calc(22px + env(safe-area-inset-top, 0px))
+                  16px
+                  calc(80px + env(safe-area-inset-bottom, 0px));
          }
          .top,
          .title,
