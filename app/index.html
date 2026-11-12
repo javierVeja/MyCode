@@ -663,27 +663,6 @@
       </div>
    </div>
 </div>
-      <div
-         id="profileModal"
-         class="modal-bg"
-         onclick="outside(event,'profileModal')"
-      >
-         <div class="modal fields">
-            <h2 id="pTitle">Your account</h2>
-            <p class="note" id="pNote"></p>
-            <label>Your name</label><input id="pName" placeholder="Alex" />
-            <label>Current weight (lb, optional)</label
-            ><input id="pWeight" type="number" step=".1" />
-            <label>Daily calorie goal</label><input id="pCal" type="number" />
-            <div class="buttons">
-               <button class="secondary" onclick="closeM('profileModal')">
-                  Later</button
-               ><button class="primary" onclick="saveProfile()">
-                  Save profile
-               </button>
-            </div>
-         </div>
-      </div>
 
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
       
