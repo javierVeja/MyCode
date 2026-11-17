@@ -1,28 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="utf-8" />
-      <meta
-         name="viewport"
-         content="width=device-width,initial-scale=1,viewport-fit=cover"
-      />
-      <title>FitTrack Pro</title>
-      <script>
-         try {
-            var t = JSON.parse(
-               localStorage.getItem("fittrack-pro") || "{}",
-            ).theme;
-            document.documentElement.dataset.theme =
-               t ||
-               (matchMedia("(prefers-color-scheme: dark)").matches
-                  ? "dark"
-                  : "light");
-         } catch (e) {
-            document.documentElement.dataset.theme = "light";
-         }
-      </script>
-      <style>
-         :root {
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <title>FitTrack Pro</title>
+    <script>
+        try {
+           var t = JSON.parse(
+              localStorage.getItem("fittrack-pro") || "{}",
+           ).theme;
+           document.documentElement.dataset.theme =
+              t ||
+              (matchMedia("(prefers-color-scheme: dark)").matches
+                 ? "dark"
+                 : "light");
+        } catch (e) {
+           document.documentElement.dataset.theme = "light";
+        }
+    </script>
+    <style>
+        :root {
             --bg: #f5f5f7;
             --card: #fffffff0;
             --text: #1d1d1f;
@@ -35,262 +33,312 @@
             --purple: #af52de;
             --glow: #eaf4ff;
             --shadow: 0 12px 35px #00000014;
-         }
-         [data-theme="dark"] {
-            --bg: #000;
-            --card: #1c1c1eee;
+        }
+
+        [data-theme="dark"] {
+            --bg: #18191c;
+            --card: #24262b;
             --text: #f5f5f7;
-            --muted: #a1a1a6;
-            --line: #3a3a3c;
-            --blue: #0a84ff;
-            --green: #30d158;
+            --muted: #b5b5bb;
+            --line: #3d4047;
+            --blue: #2997ff;
+            --green: #32d74b;
             --orange: #ff9f0a;
             --red: #ff453a;
             --purple: #bf5af2;
-            --glow: #102030;
-            --shadow: 0 12px 35px #0007;
-         }
-         * {
+            --glow: #202b38;
+            --shadow: 0 10px 30px #00000040;
+        }
+
+        * {
             box-sizing: border-box;
-         }
-         html {
+        }
+
+        html {
             scroll-padding-top: env(safe-area-inset-top, 0px);
-         }
-         body {
+        }
+
+        body {
             margin: 0;
-            background: radial-gradient(
-                  circle at top,
-                  var(--glow),
-                  var(--bg) 36%
-               )
-               fixed var(--bg);
+            background: radial-gradient(circle at top,
+                    var(--glow),
+                    var(--bg) 36%) fixed var(--bg);
             color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-               sans-serif;
-            padding-top: env(safe-area-inset-top, 0px);
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-         }
-         button,
-         input,
-         select {
+                sans-serif;
+        }
+
+        button,
+        input,
+        select {
             font: inherit;
-         }
-         .app {
+        }
+
+        .app {
             max-width: 1120px;
             margin: auto;
-            padding: 22px 16px 80px;
-         }
-         .top,
-         .title,
-         .row,
-         .meal-head {
+            padding:
+                calc(22px + env(safe-area-inset-top, 0px)) 16px calc(80px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .top,
+        .title,
+        .row,
+        .meal-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-         }
-         .top h1 {
+        }
+
+        .top h1 {
             margin: 0;
             font-size: 30px;
-         }
-         .top p {
+        }
+
+        .top p {
             margin: 4px 0 0;
-         }
-         .muted {
+        }
+
+        .muted {
             color: var(--muted);
-         }
-         .tools {
+        }
+
+        .tools {
             display: flex;
             gap: 8px;
             align-items: center;
             flex-wrap: wrap;
-         }
-         button {
+        }
+
+        button {
             border: 0;
             border-radius: 14px;
             padding: 11px 15px;
             font-weight: 650;
             cursor: pointer;
             transition:
-               transform 0.1s,
-               opacity 0.2s;
-         }
-         button:active {
+                transform 0.1s,
+                opacity 0.2s;
+        }
+
+        button:active {
             transform: scale(0.96);
-         }
-         .primary {
+        }
+
+        .primary {
             background: var(--blue);
             color: #fff;
-         }
-         .secondary {
+        }
+
+        .secondary {
             background: var(--card);
             color: var(--text);
             border: 1px solid var(--line);
-         }
-         .danger {
+        }
+
+        .danger {
             background: #ff3b301c;
             color: var(--red);
-         }
-         .chip {
+        }
+
+        .chip {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
-         }
-         .dot {
+        }
+
+        .dot {
             width: 9px;
             height: 9px;
             border-radius: 50%;
             background: var(--orange);
-         }
-         .dot.on {
+        }
+
+        .dot.on {
             background: var(--green);
-         }
-         .datebar {
+        }
+
+        .datebar {
             display: flex;
             justify-content: center;
             gap: 10px;
             margin: 18px 0;
-         }
-         input,
-         select {
+        }
+
+        input,
+        select {
             background: var(--bg);
             color: var(--text);
             border: 1px solid var(--line);
             border-radius: 12px;
             padding: 11px;
-         }
-         .grid {
+        }
+
+        .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 14px;
-         }
-         .card {
+        }
+
+        .card {
             background: var(--card);
             backdrop-filter: blur(20px);
             border: 1px solid #80808029;
             border-radius: 24px;
             padding: 20px;
             box-shadow: var(--shadow);
-         }
-         .card h2,
-         .card h3 {
+        }
+
+        .card h2,
+        .card h3 {
             margin-top: 0;
-         }
-         .big {
+        }
+
+        .big {
             font-size: 28px;
             font-weight: 760;
-         }
-         .big small {
+        }
+
+        .big small {
             font-size: 14px;
             color: var(--muted);
             font-weight: 500;
-         }
-         .bar {
+        }
+
+        .bar {
             height: 9px;
             background: #8080802e;
             border-radius: 99px;
             overflow: hidden;
             margin-top: 12px;
-         }
-         .fill {
+        }
+
+        .fill {
             height: 100%;
             border-radius: 99px;
             transition: width 0.4s;
-         }
-         .main {
+        }
+
+        .main {
             display: grid;
             grid-template-columns: 1.6fr 0.85fr;
             gap: 18px;
             margin-top: 18px;
-         }
-         .stack {
+        }
+
+        .stack {
             display: grid;
             gap: 18px;
             align-content: start;
-         }
-         .meal {
+        }
+
+        .meal {
             padding: 16px 0;
             border-top: 1px solid var(--line);
-         }
-         .meal:first-child {
+        }
+
+        .meal:first-child {
             border-top: 0;
-         }
-         .food {
+        }
+
+        .food {
             display: grid;
             grid-template-columns: 1fr auto auto;
             gap: 10px;
             padding: 10px 0;
             border-bottom: 1px solid #80808022;
-         }
-         .food small {
+        }
+
+        .food small {
             color: var(--muted);
-         }
-         .remove {
+        }
+
+        .remove {
             background: transparent;
             color: var(--red);
             padding: 0 6px;
-         }
-         .fields label {
+        }
+
+        .fields label {
             display: block;
             color: var(--muted);
             font-size: 13px;
             margin: 11px 0 5px;
-         }
-         .fields input,
-         .fields select {
+        }
+
+        .fields input,
+        .fields select {
             width: 100%;
-         }
-         .buttons {
+        }
+
+        .buttons {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
             margin-top: 14px;
-         }
-         .history .row {
+        }
+
+        .history .row {
             padding: 9px 0;
             border-bottom: 1px solid var(--line);
-         }
-         .activity {
+        }
+
+        .activity {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-top: 6px;
-         }
-         .stat {
+        }
+
+        .stat {
             background: var(--bg);
             border: 1px solid var(--line);
             border-radius: 16px;
             padding: 14px;
-         }
-         .stat span {
+        }
+
+        .stat span {
             display: block;
             color: var(--muted);
             font-size: 12px;
-         }
-         .stat strong {
+        }
+
+        .stat strong {
             font-size: 22px;
-         }
-         .wk {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr auto;
-            gap: 8px;
-            margin-top: 10px;
-         }
-         .charts {
+        }
+
+        @media (max-width: 480px) {
+            .wk {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .wk input,
+            .wk button {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+        }
+
+        .charts {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 18px;
             margin-top: 18px;
-         }
-         .chart {
+        }
+
+        .chart {
             height: 230px;
-         }
-         .chart canvas {
+        }
+
+        .chart canvas {
             width: 100%;
             height: 100%;
-         }
-         .modal-bg {
+        }
+
+        .modal-bg {
             position: fixed;
             inset: 0;
             background: #0007;
@@ -299,11 +347,13 @@
             justify-content: center;
             padding: 16px;
             z-index: 10;
-         }
-         .modal-bg.open {
+        }
+
+        .modal-bg.open {
             display: flex;
-         }
-         .modal {
+        }
+
+        .modal {
             width: min(520px, 100%);
             background: var(--card);
             backdrop-filter: blur(20px);
@@ -312,914 +362,914 @@
             padding: 20px;
             max-height: 92vh;
             overflow: auto;
-         }
-         .quick {
+        }
+
+        .quick {
             display: flex;
             flex-wrap: wrap;
             gap: 7px;
             margin-top: 10px;
-         }
-         .quick button {
+        }
+
+        .quick button {
             padding: 7px 10px;
-         }
-         .note {
+        }
+
+        .note {
             font-size: 13px;
             color: var(--muted);
             line-height: 1.45;
-         }
-         @media (max-width: 820px) {
+        }
+
+        @media (max-width: 820px) {
+
             .grid,
             .activity {
-               grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
+
             .main,
             .charts {
-               grid-template-columns: 1fr;
+                grid-template-columns: 1fr;
             }
-         }
-         @media (max-width: 480px) {
+        }
+
+        @media (max-width: 480px) {
             .card {
-               padding: 16px;
+                padding: 16px;
             }
+
             .big {
-               font-size: 23px;
+                font-size: 23px;
             }
+
             .food {
-               grid-template-columns: 1fr auto;
+                grid-template-columns: 1fr auto;
             }
+
             .food .cals {
-               display: none;
+                display: none;
             }
+
             .wk {
-               grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 1fr;
             }
+
             .top {
-               align-items: flex-start;
-               flex-direction: column;
+                align-items: flex-start;
+                flex-direction: column;
             }
-         }
-      </style>
-   </head>
-   <body>
-      <div class="app">
-         <div class="top">
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="top">
             <div>
-               <h1>FitTrack Pro</h1>
-               <p class="muted" id="hello">
-                  Nutrition, weight, activity and weekly trends
-               </p>
+                <h1>FitTrack Pro</h1>
+                <p class="muted" id="hello">Nutrition, weight, activity and weekly trends</p>
             </div>
             <div class="tools">
-               <div class="chip muted">
-                  <span class="dot" id="dot"></span
-                  ><span id="sync">Local only</span>
-               </div>
-               <button class="secondary" onclick="openProfile()">
-                  Account
-               </button>
-               <button class="secondary" onclick="theme()">Theme</button>
+                <div class="chip muted"><span id="sync">Local only</span></div><button class="secondary" id="accountButton" onclick="openAccount()">&nbsp;Sign in&nbsp;</button> <button class="secondary" onclick="theme()">Theme</button>
             </div>
-         </div>
-         <div class="datebar">
-            <button class="secondary" onclick="shift(-1)">‹</button>
-            <input id="date" type="date" onchange="render()" />
-            <button class="secondary" onclick="shift(1)">›</button>
-            <button
-               class="secondary"
-               onclick="$('date').value=today();render()"
-            >
-               Today
-            </button>
-         </div>
-         <section class="grid" id="summary"></section>
-
-         <section class="card" style="margin-top: 18px">
+        </div>
+        <div class="datebar"><button class="secondary" onclick="shift(-1)">&lsaquo;</button>&nbsp;<input id="date" type="date" onchange="render()"> <button class="secondary" onclick="shift(1)">&rsaquo;</button> <button class="secondary" onclick="$('date').value=today();render()">&nbsp;Today&nbsp;</button></div>
+        <section class="grid" id="summary"><br></section>
+        <section class="card" style="margin-top: 18px;">
             <div class="title">
-               <h2>Steps &amp; calories burned</h2>
-               <button class="secondary" onclick="openActivity()">
-                  Log totals
-               </button>
+                <h2>Steps &amp; calories burned</h2><button class="secondary" onclick="openActivity()">&nbsp;Log totals&nbsp;</button>
             </div>
-            <div class="big">
-               <span id="steps">0</span>
-               <small>/ <span id="stepGoal"></span> steps</small>
-            </div>
+            <div class="big"><span id="steps">0</span> <small>/ steps</small></div>
             <div class="bar">
-               <div
-                  class="fill"
-                  id="stepBar"
-                  style="background: var(--green)"
-               ></div>
+                <div class="fill" id="stepBar" style="background: var(--green);"><br></div>
             </div>
-            <div class="buttons">
-               <button class="secondary" onclick="addSteps(1000)">+1,000</button
-               ><button class="secondary" onclick="addSteps(5000)">
-                  +5,000</button
-               ><button class="secondary" onclick="addSteps(-1000)">
-                  −1,000
-               </button>
-            </div>
+            <div class="buttons"><button class="secondary" onclick="addSteps(1000)">+1,000</button><button class="secondary" onclick="addSteps(5000)">&nbsp;+5,000</button><button class="secondary" onclick="addSteps(-1000)">&nbsp;&minus;1,000&nbsp;</button></div>
             <div class="activity">
-               <div class="stat">
-                  <span>Total burned</span><strong id="burned">0</strong>
-               </div>
-               <div class="stat">
-                  <span>Active calories</span><strong id="active">0</strong>
-               </div>
-               <div class="stat">
-                  <span>Eaten</span><strong id="eaten">0</strong>
-               </div>
-               <div class="stat">
-                  <span>Net (eaten − burned)</span><strong id="net">0</strong>
-               </div>
+                <div class="stat"><span>Total burned</span><strong id="burned">0</strong></div>
+                <div class="stat"><span>Active calories</span><strong id="active">0</strong></div>
+                <div class="stat"><span>Eaten</span><strong id="eaten">0</strong></div>
+                <div class="stat"><span>Net (eaten &minus; burned)</span><strong id="net">0</strong></div>
             </div>
-            <h3 style="margin: 18px 0 0">Workouts</h3>
-            <div id="workouts"></div>
-            <div class="wk">
-               <input id="wName" placeholder="Run, gym, cycling…" /><input
-                  id="wMin"
-                  type="number"
-                  placeholder="Minutes"
-               /><input
-                  id="wKcal"
-                  type="number"
-                  placeholder="Calories"
-               /><button class="primary" onclick="addWorkout()">Add</button>
-            </div>
-            <p class="note">
-               Active calories = steps × 0.04 plus workouts. Total burned = your
-               base metabolism (set in goals) plus active calories, unless you
-               enter an exact total from your watch via “Log totals”.
-            </p>
-         </section>
-
-         <div class="main">
+            <h3 style="margin: 18px 0 0;">Workouts</h3>
+            <div id="workouts"><br></div>
+            <div class="wk"><input id="wName" placeholder="Run, gym, cycling…"><input id="wMin" type="number" placeholder="Minutes"><input id="wKcal" type="number" placeholder="Calories"><button class="primary" onclick="addWorkout()">Add</button></div>
+            <p class="note">Active calories = steps &times; 0.04 plus workouts. Total burned = your base metabolism (set in goals) plus active calories, unless you enter an exact total from your watch via &ldquo;Log totals&rdquo;.</p>
+        </section>
+        <div class="main">
             <section class="card">
-               <div class="title">
-                  <h2>Food diary</h2>
-                  <button class="primary" onclick="openFood()">
-                     + Add food
-                  </button>
-               </div>
-               <div id="meals"></div>
+                <div class="title">
+                    <h2>Food diary</h2><button class="primary" onclick="openFood()">&nbsp;+ Add food&nbsp;</button>
+                </div>
+                <div id="meals"><br></div>
             </section>
             <aside class="stack">
-               <section class="card">
-                  <div class="title">
-                     <h2>Weight</h2>
-                     <button class="secondary" onclick="openWeight()">
-                        Log
-                     </button>
-                  </div>
-                  <div class="big"><span id="weightNow">--</span> lb</div>
-                  <div id="weightHistory" class="history"></div>
-               </section>
-               <section class="card fields">
-                  <h2>Daily goals</h2>
-                  <label>Calories</label><input id="gCalories" type="number" />
-                  <label>Protein (g)</label
-                  ><input id="gProtein" type="number" /> <label>Carbs (g)</label
-                  ><input id="gCarbs" type="number" /> <label>Fat (g)</label
-                  ><input id="gFat" type="number" /> <label>Steps</label
-                  ><input id="gSteps" type="number" />
-                  <label>Base metabolism (cal/day)</label
-                  ><input id="gBmr" type="number" />
-                  <div class="buttons">
-                     <button class="primary" onclick="saveGoals()">Save</button
-                     ><button class="secondary" onclick="exportCSV()">
-                        Export CSV</button
-                     ><button class="danger" onclick="resetApp()">Reset</button>
-                  </div>
-               </section>
+                <section class="card">
+                    <div class="title">
+                        <h2>Weight</h2><button class="secondary" onclick="openWeight()">&nbsp;Log&nbsp;</button>
+                    </div>
+                    <div class="big"><span id="weightNow">--</span> lb</div>
+                    <div id="weightHistory" class="history"><br></div>
+                </section>
+                <section class="card fields">
+                    <h2>Daily goals</h2><label>Calories</label><input id="gCalories" type="number"> <label>Protein (g)</label><input id="gProtein" type="number"> <label>Carbs (g)</label><input id="gCarbs" type="number"> <label>Fat (g)</label><input id="gFat" type="number"> <label>Steps</label><input id="gSteps" type="number"> <label>Base metabolism (cal/day)</label><input id="gBmr" type="number">
+                    <div class="buttons"><button class="primary" onclick="saveGoals()">Save</button><button class="secondary" onclick="exportCSV()">&nbsp;Export CSV</button><button class="danger" onclick="resetApp()">Reset</button></div>
+                </section>
             </aside>
-         </div>
-
-         <section class="charts">
+        </div>
+        <section class="charts">
             <div class="card">
-               <h2>Goal score</h2>
-               <p class="muted">Calories &amp; protein adherence</p>
-               <div class="chart"><canvas id="scoreChart"></canvas></div>
-            </div>
-            <div class="card">
-               <h2>Steps</h2>
-               <p class="muted">Last seven days</p>
-               <div class="chart"><canvas id="stepChart"></canvas></div>
+                <h2>Goal score</h2>
+                <p class="muted">Calories &amp; protein adherence</p>
+                <div class="chart"><canvas id="scoreChart"><br></canvas></div>
             </div>
             <div class="card">
-               <h2>Eaten vs burned</h2>
-               <p class="muted">Net calories, last seven days</p>
-               <div class="chart"><canvas id="netChart"></canvas></div>
+                <h2>Steps</h2>
+                <p class="muted">Last seven days</p>
+                <div class="chart"><canvas id="stepChart"><br></canvas></div>
             </div>
             <div class="card">
-               <h2>Weight trend</h2>
-               <p class="muted">Last seven days</p>
-               <div class="chart"><canvas id="weightChart"></canvas></div>
+                <h2>Eaten vs burned</h2>
+                <p class="muted">Net calories, last seven days</p>
+                <div class="chart"><canvas id="netChart"><br></canvas></div>
             </div>
             <div class="card">
-               <h2>Calories eaten</h2>
-               <p class="muted">Last seven days</p>
-               <div class="chart"><canvas id="calChart"></canvas></div>
+                <h2>Weight trend</h2>
+                <p class="muted">Last seven days</p>
+                <div class="chart"><canvas id="weightChart"><br></canvas></div>
             </div>
             <div class="card">
-               <h2>Protein</h2>
-               <p class="muted">Last seven days</p>
-               <div class="chart"><canvas id="proChart"></canvas></div>
+                <h2>Calories eaten</h2>
+                <p class="muted">Last seven days</p>
+                <div class="chart"><canvas id="calChart"><br></canvas></div>
             </div>
-         </section>
-      </div>
-
-      <div id="foodModal" class="modal-bg" onclick="outside(event,'foodModal')">
-         <div class="modal fields">
-            <h2>Add food</h2>
-            <label>Meal</label
-            ><select id="meal">
-               <option>Breakfast</option>
-               <option>Lunch</option>
-               <option>Dinner</option>
-               <option>Snacks</option>
-            </select>
-            <label>Food</label
-            ><input id="foodName" placeholder="Chicken breast" />
-            <div class="quick">
-               <button class="secondary" onclick="quick('Oatmeal',150,5,27,3)">
-                  Oatmeal</button
-               ><button
-                  class="secondary"
-                  onclick="quick('Chicken breast',165,31,0,4)"
-               >
-                  Chicken</button
-               ><button class="secondary" onclick="quick('Rice',205,4,45,0)">
-                  Rice</button
-               ><button
-                  class="secondary"
-                  onclick="quick('Protein shake',160,30,4,2)"
-               >
-                  Shake</button
-               ><button
-                  class="secondary"
-                  onclick="quick('Eggs (2)',140,12,1,10)"
-               >
-                  Eggs
-               </button>
+            <div class="card">
+                <h2>Protein</h2>
+                <p class="muted">Last seven days</p>
+                <div class="chart"><canvas id="proChart"><br></canvas></div>
             </div>
-            <label>Calories</label
-            ><input id="foodCalories" type="number" /><label>Protein (g)</label
-            ><input id="foodProtein" type="number" /><label>Carbs (g)</label
-            ><input id="foodCarbs" type="number" /><label>Fat (g)</label
-            ><input id="foodFat" type="number" />
-            <div class="buttons">
-               <button class="secondary" onclick="closeM('foodModal')">
-                  Cancel</button
-               ><button class="primary" onclick="addFood()">Add</button>
-            </div>
-         </div>
-      </div>
+        </section>
+    </div>
+    <div id="foodModal" class="modal-bg" onclick="outside(event,'foodModal')">
+        <div class="modal fields">
+            <h2>Add food</h2><label>Meal</label><select id="meal">&nbsp;<option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+                <option>Snacks</option>&nbsp;
+            </select> <label>Food</label><input id="foodName" placeholder="Chicken breast">
+            <div class="quick"><button class="secondary" onclick="quick('Oatmeal',150,5,27,3)">&nbsp;Oatmeal</button><button class="secondary" onclick="quick('Chicken breast',165,31,0,4)">&nbsp;Chicken</button><button class="secondary" onclick="quick('Rice',205,4,45,0)">&nbsp;Rice</button><button class="secondary" onclick="quick('Protein shake',160,30,4,2)">&nbsp;Shake</button><button class="secondary" onclick="quick('Eggs (2)',140,12,1,10)">&nbsp;Eggs&nbsp;</button></div><label>Calories</label><input id="foodCalories" type="number"><label>Protein (g)</label><input id="foodProtein" type="number"><label>Carbs (g)</label><input id="foodCarbs" type="number"><label>Fat (g)</label><input id="foodFat" type="number">
+            <div class="buttons"><button class="secondary" onclick="closeM('foodModal')">&nbsp;Cancel</button><button class="primary" onclick="addFood()">Add</button></div>
+        </div>
+    </div>
+    <div id="weightModal" class="modal-bg" onclick="outside(event,'weightModal')">
+        <div class="modal fields">
+            <h2>Log weight</h2><label>Weight (lb)</label><input id="weightInput" type="number" step=".1">
+            <div class="buttons"><button class="secondary" onclick="closeM('weightModal')">&nbsp;Cancel</button><button class="primary" onclick="saveWeight()">Save</button></div>
+        </div>
+    </div>
+    <div id="activityModal" class="modal-bg" onclick="outside(event,'activityModal')">
+        <div class="modal fields">
+            <h2>Log activity totals</h2><label>Steps</label><input id="stepsInput" type="number"> <label>Total calories burned (optional, overrides the estimate)</label><input id="burnedInput" type="number"> <label>Sleep hours</label><input id="sleepInput" type="number" step=".1">
+            <div class="buttons"><button class="secondary" onclick="closeM('activityModal')">&nbsp;Cancel</button><button class="primary" onclick="saveActivity()">Save</button></div>
+        </div>
+    </div>
+    <div id="accountModal" class="modal-bg" onclick="outside(event,'accountModal')">
+        <div class="modal fields">
+            <h2 id="accountTitle">Sign in</h2>
+            <p class="note" id="accountNote">Sign in to save your FitTrack records to your account.</p><label>Email</label> <input id="accountEmail" type="email" placeholder="you@example.com" autocomplete="email"> <label>Password</label> <input id="accountPassword" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+            <div class="buttons"><button class="primary" onclick="signIn()">&nbsp;Sign in&nbsp;</button> <button class="secondary" onclick="createAccount()">&nbsp;Create account&nbsp;</button> <button class="secondary" id="signOutButton" onclick="signOut()" style="display:none;">&nbsp;Sign out&nbsp;</button> <button class="secondary" onclick="closeM('accountModal')">&nbsp;Close&nbsp;</button></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://jivmgdowkdycqevlwbpa.supabase.co";
+        
+        const SUPABASE_PUBLISHABLE_KEY =
+           "sb_publishable_pAgAdBWzXLZ3VIJ2iKNuXg_6vRmQXws";
+        
+        const sb = window.supabase.createClient(
+           SUPABASE_URL,
+           SUPABASE_PUBLISHABLE_KEY,
+        );
+        
+        const $ = (id) => document.getElementById(id),
+           MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"],
+           KEY = "fittrack-pro";
+        const defaults = {
+           goals: {
+              calories: 2800,
+              protein: 160,
+              carbs: 300,
+              fat: 80,
+              steps: 10000,
+              bmr: 1800,
+           },
+           logs: {},
+           weights: {},
+           activity: {},
+           profile: {},
+           theme: null,
+        };
+        let data = norm(readLocal()),
+           uid = null,
+           cloud = null,
+           saveT;
+        function readLocal() {
+           try {
+              return JSON.parse(localStorage.getItem(KEY) || "{}");
+           } catch {
+              return {};
+           }
+        }
+        function norm(s) {
+           s = s || {};
+           return {
+              ...defaults,
+              ...s,
+              goals: { ...defaults.goals, ...s.goals },
+              logs: s.logs || {},
+              weights: s.weights || {},
+              activity: s.activity || {},
+              profile: s.profile || {},
+           };
+        }
+        function save() {
+           try {
+              localStorage.setItem(KEY, JSON.stringify(data));
+           } catch {}
+           if (cloud) {
+              clearTimeout(saveT);
+              saveT = setTimeout(
+                 () =>
+                    cloud
+                       .set({ json: JSON.stringify(data) })
+                       .then(() => status(true, "Saved to your account"))
+                       .catch(() =>
+                          status(false, "Sync failed – saved locally"),
+                       ),
+                 700,
+              );
+           }
+        }
+        function status(on, t) {
+           $("dot").className = "dot" + (on ? " on" : "");
+           $("sync").textContent = t;
+        }
+        async function initCloud() {
+           try {
+              if (!window.claude || !claude.use) return;
+              const [u, d] = await Promise.all([
+                 claude.use("user"),
+                 claude.use("db"),
+              ]);
+              if (!u || !d) return;
+              uid = await u.id();
+              if (!uid) return;
+              cloud = d.collection("data/users/" + uid).doc("fittrack");
+              const s = await cloud.get();
+              if (s.exists && s.data()?.json) {
+                 data = norm(JSON.parse(s.data().json));
+                 try {
+                    localStorage.setItem(KEY, JSON.stringify(data));
+                 } catch {}
+              } else await cloud.set({ json: JSON.stringify(data) });
+              status(true, "Synced to your account");
+              applyTheme();
+              render();
+              if (!data.profile.name) openProfile(true);
+           } catch (e) {
+              status(false, "Local only");
+           }
+        }
+        const num = (v) => Number(v) || 0,
+           pad = (n) => String(n).padStart(2, "0");
+        const keyOf = (d) =>
+           `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const today = () => keyOf(new Date());
+        $("date").value = today();
+        const D = () => $("date").value;
+        function applyTheme() {
+           if (data.theme) document.documentElement.dataset.theme = data.theme;
+        }
+        function log() {
+           return (data.logs[D()] ??= { foods: [] });
+        }
+        function act(k = D()) {
+           const a = data.activity[k] || {};
+           return {
+              steps: num(a.steps),
+              burned: num(a.burned),
+              sleep: num(a.sleep),
+              workouts: a.workouts || [],
+           };
+        }
+        function actSet(p) {
+           data.activity[D()] = { ...act(), ...p };
+        }
+        function totals(k = D()) {
+           return (data.logs[k]?.foods || []).reduce(
+              (a, f) => ({
+                 calories: a.calories + num(f.calories),
+                 protein: a.protein + num(f.protein),
+                 carbs: a.carbs + num(f.carbs),
+                 fat: a.fat + num(f.fat),
+              }),
+              { calories: 0, protein: 0, carbs: 0, fat: 0 },
+           );
+        }
+        function burn(k = D()) {
+           const a = act(k),
+              has = data.activity[k];
+           const active = Math.round(
+              a.steps * 0.04 + a.workouts.reduce((s, w) => s + num(w.kcal), 0),
+           );
+           return {
+              active,
+              total:
+                 a.burned > 0 ? a.burned : has ? data.goals.bmr + active : 0,
+           };
+        }
+        function esc(s) {
+           return String(s).replace(
+              /[&<>"']/g,
+              (c) =>
+                 ({
+                    "&": "&",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;",
+                 })[c],
+           );
+        }
+        
+        function render() {
+           const t = totals(),
+              g = data.goals,
+              colors = {
+                 calories: "var(--blue)",
+                 protein: "var(--green)",
+                 carbs: "var(--orange)",
+                 fat: "var(--purple)",
+              };
+           $("hello").textContent = data.profile.name
+              ? `Welcome back, ${data.profile.name}`
+              : "Nutrition, weight, activity and weekly trends";
+           $("summary").innerHTML = Object.keys(colors)
+              .map((k) => {
+                 const u = k === "calories" ? "" : "g";
+                 return `<div class="card"><h3>${k[0].toUpperCase() + k.slice(1)}</h3><div class="big">${Math.round(t[k])}${u} <small>/ ${g[k]}${u}</small></div><div class="muted">${Math.max(0, Math.round(g[k] - t[k]))}${u} remaining</div><div class="bar"><div class="fill" style="width:${Math.min(100, (t[k] / g[k]) * 100 || 0)}%;background:${colors[k]}"></div></div></div>`;
+              })
+              .join("");
+           $("meals").innerHTML = MEALS.map((m) => {
+              const fs = log().foods.filter((f) => f.meal === m),
+                 c = fs.reduce((s, f) => s + num(f.calories), 0);
+              return `<div class="meal"><div class="meal-head"><div><h3 style="margin:0">${m}</h3><span class="muted">${Math.round(c)} calories</span></div><button class="secondary" onclick="openFood('${m}')">+ Add</button></div>${fs.length ? fs.map((f) => `<div class="food"><div><strong>${esc(f.name)}</strong><br><small>P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g</small></div><span class="cals">${f.calories} cal</span><button class="remove" onclick="removeFood('${f.id}')" aria-label="Remove">×</button></div>`).join("") : '<p class="muted">No food logged.</p>'}</div>`;
+           }).join("");
+           renderWeight();
+           renderActivity(t.calories);
+           [
+              ["gCalories", "calories"],
+              ["gProtein", "protein"],
+              ["gCarbs", "carbs"],
+              ["gFat", "fat"],
+              ["gSteps", "steps"],
+              ["gBmr", "bmr"],
+           ].forEach(([i, k]) => {
+              if (document.activeElement !== $(i)) $(i).value = g[k];
+           });
+           charts();
+           save();
+        }
+        function renderActivity(eaten) {
+           const a = act(),
+              b = burn(),
+              g = data.goals.steps || 10000;
+           $("steps").textContent = a.steps.toLocaleString();
+           $("stepGoal").textContent = g.toLocaleString();
+           $("stepBar").style.width = Math.min(100, (a.steps / g) * 100) + "%";
+           $("burned").textContent = Math.round(b.total).toLocaleString();
+           $("active").textContent = b.active.toLocaleString();
+           $("eaten").textContent = Math.round(eaten).toLocaleString();
+           const v = Math.round(eaten - b.total);
+           $("net").textContent = (v > 0 ? "+" : "") + v;
+           $("net").style.color = v > 0 ? "var(--orange)" : "var(--green)";
+           $("workouts").innerHTML = a.workouts.length
+              ? a.workouts
+                   .map(
+                      (w, i) =>
+                         `<div class="food"><div><strong>${esc(w.name)}</strong><br><small>${num(w.min)} min</small></div><span class="cals">${num(w.kcal)} cal</span><button class="remove" onclick="removeWorkout(${i})" aria-label="Remove">×</button></div>`,
+                   )
+                   .join("")
+              : '<p class="muted">No workouts logged.</p>';
+        }
+        function addSteps(n) {
+           actSet({ steps: Math.max(0, act().steps + n) });
+           render();
+        }
+        function addWorkout() {
+           const n = $("wName").value.trim(),
+              k = num($("wKcal").value);
+           if (!n || !k) return alert("Enter a workout name and calories.");
+           actSet({
+              workouts: [
+                 ...act().workouts,
+                 { name: n, min: num($("wMin").value), kcal: k },
+              ],
+           });
+           ["wName", "wMin", "wKcal"].forEach((i) => ($(i).value = ""));
+           render();
+        }
+        function removeWorkout(i) {
+           actSet({ workouts: act().workouts.filter((_, j) => j !== i) });
+           render();
+        }
+        function openActivity() {
+           const a = act();
+           $("stepsInput").value = a.steps || "";
+           $("burnedInput").value = a.burned || "";
+           $("sleepInput").value = a.sleep || "";
+           $("activityModal").classList.add("open");
+        }
+        function saveActivity() {
+           actSet({
+              steps: num($("stepsInput").value),
+              burned: num($("burnedInput").value),
+              sleep: num($("sleepInput").value),
+           });
+           closeM("activityModal");
+           render();
+        }
+        
+        function openFood(m) {
+           if (m) $("meal").value = m;
+           $("foodModal").classList.add("open");
+        }
+        function quick(n, c, p, ca, f) {
+           $("foodName").value = n;
+           $("foodCalories").value = c;
+           $("foodProtein").value = p;
+           $("foodCarbs").value = ca;
+           $("foodFat").value = f;
+        }
+        function addFood() {
+           if (!$("foodName").value.trim() || !$("foodCalories").value)
+              return alert("Enter a name and calories.");
+           log().foods.push({
+              id: crypto.randomUUID?.() || Date.now() + "",
+              meal: $("meal").value,
+              name: $("foodName").value.trim(),
+              calories: num($("foodCalories").value),
+              protein: num($("foodProtein").value),
+              carbs: num($("foodCarbs").value),
+              fat: num($("foodFat").value),
+           });
+           [
+              "foodName",
+              "foodCalories",
+              "foodProtein",
+              "foodCarbs",
+              "foodFat",
+           ].forEach((x) => ($(x).value = ""));
+           closeM("foodModal");
+           render();
+        }
+        function removeFood(id) {
+           log().foods = log().foods.filter((f) => f.id !== id);
+           render();
+        }
+        function openWeight() {
+           $("weightInput").value = data.weights[D()] || "";
+           $("weightModal").classList.add("open");
+        }
+        function saveWeight() {
+           if ($("weightInput").value)
+              data.weights[D()] = num($("weightInput").value);
+           closeM("weightModal");
+           render();
+        }
+        function renderWeight() {
+           const e = Object.entries(data.weights).sort((a, b) =>
+              b[0].localeCompare(a[0]),
+           );
+           $("weightNow").textContent =
+              data.weights[D()] ??
+              e.find((x) => x[0] <= D())?.[1] ??
+              e[0]?.[1] ??
+              "--";
+           $("weightHistory").innerHTML = e
+              .slice(0, 6)
+              .map(
+                 ([d, w]) =>
+                    `<div class="row"><span>${d}</span><strong>${w} lb</strong></div>`,
+              )
+              .join("");
+        }
+        function saveGoals() {
+           data.goals = {
+              calories: num($("gCalories").value),
+              protein: num($("gProtein").value),
+              carbs: num($("gCarbs").value),
+              fat: num($("gFat").value),
+              steps: num($("gSteps").value) || 10000,
+              bmr: num($("gBmr").value),
+           };
+           render();
+        }
+        
+        let currentUser = null;
+        
+        async function initializeAccount() {
+           const {
+              data: { session },
+           } = await sb.auth.getSession();
+        
+           currentUser = session?.user || null;
+           updateAccountDisplay();
+        
+           sb.auth.onAuthStateChange((_event, session) => {
+              currentUser = session?.user || null;
+              updateAccountDisplay();
+           });
+        }
+        
+        function updateAccountDisplay() {
+           const button = $("accountButton");
+        
+           if (currentUser) {
+              button.textContent = "Account";
+              status(true, "Signed in and ready to sync");
+           } else {
+              button.textContent = "Sign in";
+              status(false, "Local only");
+           }
+        }
+        
+        function openAccount() {
+           const signedIn = Boolean(currentUser);
+        
+           $("accountTitle").textContent = signedIn
+              ? "Your account"
+              : "Sign in";
+        
+           $("accountNote").textContent = signedIn
+              ? `Signed in as ${currentUser.email}`
+              : "Sign in or create an account to save your records across devices.";
+        
+           $("accountEmail").value = currentUser?.email || "";
+           $("accountEmail").disabled = signedIn;
+           $("accountPassword").style.display = signedIn ? "none" : "";
+           $("signOutButton").style.display = signedIn ? "" : "none";
+        
+           $("accountModal").classList.add("open");
+        }
+        
+        async function createAccount() {
+           const email = $("accountEmail").value.trim();
+           const password = $("accountPassword").value;
+        
+           if (!email) {
+              alert("Enter your email address.");
+              return;
+           }
+        
+           if (password.length < 6) {
+              alert("Your password must contain at least 6 characters.");
+              return;
+           }
+        
+           status(false, "Creating account...");
+        
+           const { data: authData, error } = await sb.auth.signUp({
+              email,
+              password,
+           });
+        
+           if (error) {
+              status(false, "Account creation failed");
+              alert(error.message);
+              return;
+           }
+        
+           if (authData.session) {
+              currentUser = authData.user;
+              status(true, "Account created");
+              closeM("accountModal");
+              updateAccountDisplay();
+              openProfile(true);
+           } else {
+              status(false, "Check your email");
+              alert(
+        "Your account was created. Check your email and click the confirmation link before signing in.",
+              );
+           }
+        }
+        
+        async function signIn() {
+           const email = $("accountEmail").value.trim();
+           const password = $("accountPassword").value;
+        
+           if (!email || !password) {
+              alert("Enter your email address and password.");
+              return;
+           }
+        
+           status(false, "Signing in...");
+        
+           const { data: authData, error } =
+              await sb.auth.signInWithPassword({
+        email,
+        password,
+              });
+        
+           if (error) {
+              status(false, "Sign in failed");
+              alert(error.message);
+              return;
+           }
+        
+           currentUser = authData.user;
+        
+           status(true, "Signed in");
+           closeM("accountModal");
+           updateAccountDisplay();
+        }
+        
+        async function signOut() {
+           const { error } = await sb.auth.signOut();
+        
+           if (error) {
+              alert(error.message);
+              return;
+           }
+        
+           currentUser = null;
+           closeM("accountModal");
+           updateAccountDisplay();
+        }
+        function openProfile(first) {
+           $("pTitle").textContent = first
+              ? "Create your profile"
+              : "Your account";
+           $("pNote").textContent = cloud
+              ? "You're signed in with your Claude account. Your records are saved to it and follow you across devices."
+              : "You're not signed in, so records are saved only in this browser. Open this page while signed in to Claude to save them to your account.";
+           $("pName").value = data.profile.name || "";
+           $("pWeight").value = data.weights[today()] || "";
+           $("pCal").value = data.goals.calories;
+           $("profileModal").classList.add("open");
+        }
+        function saveProfile() {
+           data.profile.name = $("pName").value.trim();
+           if ($("pWeight").value)
+              data.weights[today()] = num($("pWeight").value);
+           if ($("pCal").value) data.goals.calories = num($("pCal").value);
+           closeM("profileModal");
+           render();
+        }
+        
+        function shift(x) {
+           const d = new Date(D() + "T12:00:00");
+           d.setDate(d.getDate() + x);
+           $("date").value = keyOf(d);
+           render();
+        }
+        function closeM(id) {
+           $(id).classList.remove("open");
+        }
+        function outside(e, id) {
+           if (e.target.id === id) closeM(id);
+        }
+        function theme() {
+           const dk = document.documentElement.dataset.theme === "dark";
+           data.theme = dk ? "light" : "dark";
+           document.documentElement.dataset.theme = data.theme;
+           render();
+        }
+        
+        function days() {
+           const a = [];
+           for (let i = 6; i >= 0; i--) {
+              const d = new Date();
+              d.setHours(12, 0, 0, 0);
+              d.setDate(d.getDate() - i);
+              a.push({
+                 key: keyOf(d),
+                 label: d.toLocaleDateString("en-US", { weekday: "short" }),
+              });
+           }
+           return a;
+        }
+        function line(id, labels, vals, o = {}) {
+           const c = $(id),
+              r = c.parentElement.getBoundingClientRect(),
+              q = devicePixelRatio || 1,
+              w = Math.max(280, r.width),
+              h = Math.max(200, r.height);
+           c.width = w * q;
+           c.height = h * q;
+           const x = c.getContext("2d");
+           x.scale(q, q);
+           const p = { l: 46, r: 16, t: 16, b: 30 },
+              iw = w - p.l - p.r,
+              ih = h - p.t - p.b,
+              fin = vals.filter((v) => v != null);
+           let max = o.max ?? Math.max(...fin, 1),
+              min = o.min ?? Math.min(0, ...fin);
+           if (max === min) max++;
+           const cs = getComputedStyle(document.documentElement),
+              X = (i) =>
+                 p.l +
+                 (vals.length === 1 ? iw / 2 : (iw * i) / (vals.length - 1)),
+              Y = (v) => p.t + ih * (1 - (v - min) / (max - min));
+           x.font = "12px sans-serif";
+           x.lineWidth = 1;
+           for (let i = 0; i < 5; i++) {
+              const y = p.t + (ih * i) / 4;
+              x.strokeStyle = cs.getPropertyValue("--line");
+              x.beginPath();
+              x.moveTo(p.l, y);
+              x.lineTo(w - p.r, y);
+              x.stroke();
+              x.fillStyle = cs.getPropertyValue("--muted");
+              x.fillText(Math.round(max - ((max - min) * i) / 4), 3, y + 4);
+           }
+           labels.forEach((v, i) => {
+              x.fillStyle = cs.getPropertyValue("--muted");
+              x.fillText(v, X(i) - 10, h - 8);
+           });
+           const col = o.color || "#0071e3";
+           x.strokeStyle = col;
+           x.lineWidth = 3;
+           x.lineJoin = "round";
+           x.beginPath();
+           let on = false;
+           vals.forEach((v, i) => {
+              if (v == null) {
+                 on = false;
+                 return;
+              }
+              on ? x.lineTo(X(i), Y(v)) : x.moveTo(X(i), Y(v));
+              on = true;
+           });
+           x.stroke();
+           x.fillStyle = col;
+           vals.forEach((v, i) => {
+              if (v == null) return;
+              x.beginPath();
+              x.arc(X(i), Y(v), 4, 0, 7);
+              x.fill();
+           });
+           if (o.zero && min < 0 && max > 0) {
+              x.strokeStyle = cs.getPropertyValue("--muted");
+              x.setLineDash([4, 4]);
+              x.lineWidth = 1;
+              x.beginPath();
+              x.moveTo(p.l, Y(0));
+              x.lineTo(w - p.r, Y(0));
+              x.stroke();
+              x.setLineDash([]);
+           }
+        }
+        function charts() {
+           const ds = days(),
+              L = ds.map((d) => d.label),
+              g = data.goals,
+              cal = [],
+              pro = [],
+              score = [],
+              ws = [],
+              st = [],
+              net = [];
+           ds.forEach((d) => {
+              const t = totals(d.key),
+                 has = (data.logs[d.key]?.foods || []).length,
+                 b = burn(d.key);
+              cal.push(Math.round(t.calories));
+              pro.push(Math.round(t.protein));
+              score.push(
+                 has
+                    ? Math.round(
+                         (Math.min(t.calories / g.calories, 1) +
+                            Math.min(t.protein / g.protein, 1)) *
+                            50,
+                      )
+                    : 0,
+              );
+              ws.push(data.weights[d.key] ?? null);
+              st.push(act(d.key).steps);
+              net.push(
+                 has && b.total ? Math.round(t.calories - b.total) : null,
+              );
+           });
+           const wf = ws.filter((v) => v != null);
+           line("scoreChart", L, score, { min: 0, max: 100 });
+           line("stepChart", L, st, { min: 0, color: "#30b85a" });
+           line("netChart", L, net, {
+              color: "#ff3b30",
+              zero: true,
+              min: Math.min(0, ...net.filter((v) => v != null)),
+           });
+           line("weightChart", L, ws, {
+              min: wf.length ? Math.floor(Math.min(...wf) - 3) : 0,
+              max: wf.length ? Math.ceil(Math.max(...wf) + 3) : 100,
+              color: "#af52de",
+           });
+           line("calChart", L, cal, { min: 0, color: "#ff9500" });
+           line("proChart", L, pro, { min: 0, color: "#0071e3" });
+        }
+        async function exportCSV() {
+           const rows = [
+              [
+                 "Date",
+                 "Meal",
+                 "Food",
+                 "Calories",
+                 "Protein",
+                 "Carbs",
+                 "Fat",
+                 "Weight",
+                 "Steps",
+                 "Burned",
+                 "Active",
+                 "Sleep",
+              ],
+           ];
+           [
+              ...new Set([
+                 ...Object.keys(data.logs),
+                 ...Object.keys(data.weights),
+                 ...Object.keys(data.activity),
+              ]),
+           ]
+              .sort()
+              .forEach((d) => {
+                 const fs = data.logs[d]?.foods?.length
+                       ? data.logs[d].foods
+                       : [{}],
+                    a = act(d),
+                    b = burn(d);
+                 fs.forEach((f, i) =>
+                    rows.push([
+                       d,
+                       f.meal || "",
+                       f.name || "",
+                       f.calories || "",
+                       f.protein || "",
+                       f.carbs || "",
+                       f.fat || "",
+                       i ? "" : data.weights[d] || "",
+                       i ? "" : a.steps || "",
+                       i ? "" : b.total || "",
+                       i ? "" : b.active || "",
+                       i ? "" : a.sleep || "",
+                    ]),
+                 );
+              });
+           const csv = rows
+              .map((r) =>
+                 r
+                    .map((v) => '"' + String(v).replaceAll('"', '""') + '"')
+                    .join(","),
+              )
+              .join("\n");
+           try {
+              const dl = window.claude && (await claude.use("downloads"));
+              if (dl) {
+                 await dl.save({ filename: "fittrack-data.csv", data: csv });
+                 return;
+              }
+           } catch {
+              return;
+           }
+           const a = document.createElement("a");
+           a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+           a.download = "fittrack-data.csv";
+           a.click();
+        }
+        function resetApp() {
+           if (
+              confirm(
+                 "Delete all FitTrack data? This also clears your saved account data.",
+              )
+           ) {
+              data = norm({ theme: data.theme });
+              $("date").value = today();
+              render();
+           }
+        }
+        addEventListener("resize", () => {
+           clearTimeout(window.rt);
+           window.rt = setTimeout(charts, 150);
+        });
+        applyTheme();
+        render();
+        initializeAccount();
+        if (!data.profile.name && !window.claude)
+           setTimeout(() => openProfile(true), 400);
+    </script>
 
-      <div
-         id="weightModal"
-         class="modal-bg"
-         onclick="outside(event,'weightModal')"
-      >
-         <div class="modal fields">
-            <h2>Log weight</h2>
-            <label>Weight (lb)</label
-            ><input id="weightInput" type="number" step=".1" />
-            <div class="buttons">
-               <button class="secondary" onclick="closeM('weightModal')">
-                  Cancel</button
-               ><button class="primary" onclick="saveWeight()">Save</button>
-            </div>
-         </div>
-      </div>
+<div style="bottom: 10px; right: 10px; position: absolute;"><a href="https://signatureforemail.com/?utm_source=wth_free_link&utm_medium=external" target="_blank" rel="noopener" style="font-size:11px; color: #c0c0c0;">Creador de firmas de correo electrónico</a></div>
+</body>
 
-      <div
-         id="activityModal"
-         class="modal-bg"
-         onclick="outside(event,'activityModal')"
-      >
-         <div class="modal fields">
-            <h2>Log activity totals</h2>
-            <label>Steps</label><input id="stepsInput" type="number" />
-            <label
-               >Total calories burned (optional, overrides the estimate)</label
-            ><input id="burnedInput" type="number" /> <label>Sleep hours</label
-            ><input id="sleepInput" type="number" step=".1" />
-            <div class="buttons">
-               <button class="secondary" onclick="closeM('activityModal')">
-                  Cancel</button
-               ><button class="primary" onclick="saveActivity()">Save</button>
-            </div>
-         </div>
-      </div>
-
-      <div
-         id="profileModal"
-         class="modal-bg"
-         onclick="outside(event,'profileModal')"
-      >
-         <div class="modal fields">
-            <h2 id="pTitle">Your account</h2>
-            <p class="note" id="pNote"></p>
-            <label>Your name</label><input id="pName" placeholder="Alex" />
-            <label>Current weight (lb, optional)</label
-            ><input id="pWeight" type="number" step=".1" />
-            <label>Daily calorie goal</label><input id="pCal" type="number" />
-            <div class="buttons">
-               <button class="secondary" onclick="closeM('profileModal')">
-                  Later</button
-               ><button class="primary" onclick="saveProfile()">
-                  Save profile
-               </button>
-            </div>
-         </div>
-      </div>
-
-      <script>
-         const $ = (id) => document.getElementById(id),
-            MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"],
-            KEY = "fittrack-pro";
-         const defaults = {
-            goals: {
-               calories: 2800,
-               protein: 160,
-               carbs: 300,
-               fat: 80,
-               steps: 10000,
-               bmr: 1800,
-            },
-            logs: {},
-            weights: {},
-            activity: {},
-            profile: {},
-            theme: null,
-         };
-         let data = norm(readLocal()),
-            uid = null,
-            cloud = null,
-            saveT;
-         function readLocal() {
-            try {
-               return JSON.parse(localStorage.getItem(KEY) || "{}");
-            } catch {
-               return {};
-            }
-         }
-         function norm(s) {
-            s = s || {};
-            return {
-               ...defaults,
-               ...s,
-               goals: { ...defaults.goals, ...s.goals },
-               logs: s.logs || {},
-               weights: s.weights || {},
-               activity: s.activity || {},
-               profile: s.profile || {},
-            };
-         }
-         function save() {
-            try {
-               localStorage.setItem(KEY, JSON.stringify(data));
-            } catch {}
-            if (cloud) {
-               clearTimeout(saveT);
-               saveT = setTimeout(
-                  () =>
-                     cloud
-                        .set({ json: JSON.stringify(data) })
-                        .then(() => status(true, "Saved to your account"))
-                        .catch(() =>
-                           status(false, "Sync failed – saved locally"),
-                        ),
-                  700,
-               );
-            }
-         }
-         function status(on, t) {
-            $("dot").className = "dot" + (on ? " on" : "");
-            $("sync").textContent = t;
-         }
-         async function initCloud() {
-            try {
-               if (!window.claude || !claude.use) return;
-               const [u, d] = await Promise.all([
-                  claude.use("user"),
-                  claude.use("db"),
-               ]);
-               if (!u || !d) return;
-               uid = await u.id();
-               if (!uid) return;
-               cloud = d.collection("data/users/" + uid).doc("fittrack");
-               const s = await cloud.get();
-               if (s.exists && s.data()?.json) {
-                  data = norm(JSON.parse(s.data().json));
-                  try {
-                     localStorage.setItem(KEY, JSON.stringify(data));
-                  } catch {}
-               } else await cloud.set({ json: JSON.stringify(data) });
-               status(true, "Synced to your account");
-               applyTheme();
-               render();
-               if (!data.profile.name) openProfile(true);
-            } catch (e) {
-               status(false, "Local only");
-            }
-         }
-         const num = (v) => Number(v) || 0,
-            pad = (n) => String(n).padStart(2, "0");
-         const keyOf = (d) =>
-            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-         const today = () => keyOf(new Date());
-         $("date").value = today();
-         const D = () => $("date").value;
-         function applyTheme() {
-            if (data.theme) document.documentElement.dataset.theme = data.theme;
-         }
-         function log() {
-            return (data.logs[D()] ??= { foods: [] });
-         }
-         function act(k = D()) {
-            const a = data.activity[k] || {};
-            return {
-               steps: num(a.steps),
-               burned: num(a.burned),
-               sleep: num(a.sleep),
-               workouts: a.workouts || [],
-            };
-         }
-         function actSet(p) {
-            data.activity[D()] = { ...act(), ...p };
-         }
-         function totals(k = D()) {
-            return (data.logs[k]?.foods || []).reduce(
-               (a, f) => ({
-                  calories: a.calories + num(f.calories),
-                  protein: a.protein + num(f.protein),
-                  carbs: a.carbs + num(f.carbs),
-                  fat: a.fat + num(f.fat),
-               }),
-               { calories: 0, protein: 0, carbs: 0, fat: 0 },
-            );
-         }
-         function burn(k = D()) {
-            const a = act(k),
-               has = data.activity[k];
-            const active = Math.round(
-               a.steps * 0.04 + a.workouts.reduce((s, w) => s + num(w.kcal), 0),
-            );
-            return {
-               active,
-               total:
-                  a.burned > 0 ? a.burned : has ? data.goals.bmr + active : 0,
-            };
-         }
-         function esc(s) {
-            return String(s).replace(
-               /[&<>"']/g,
-               (c) =>
-                  ({
-                     "&": "&amp;",
-                     "<": "&lt;",
-                     ">": "&gt;",
-                     '"': "&quot;",
-                     "'": "&#39;",
-                  })[c],
-            );
-         }
-
-         function render() {
-            const t = totals(),
-               g = data.goals,
-               colors = {
-                  calories: "var(--blue)",
-                  protein: "var(--green)",
-                  carbs: "var(--orange)",
-                  fat: "var(--purple)",
-               };
-            $("hello").textContent = data.profile.name
-               ? `Welcome back, ${data.profile.name}`
-               : "Nutrition, weight, activity and weekly trends";
-            $("summary").innerHTML = Object.keys(colors)
-               .map((k) => {
-                  const u = k === "calories" ? "" : "g";
-                  return `<div class="card"><h3>${k[0].toUpperCase() + k.slice(1)}</h3><div class="big">${Math.round(t[k])}${u} <small>/ ${g[k]}${u}</small></div><div class="muted">${Math.max(0, Math.round(g[k] - t[k]))}${u} remaining</div><div class="bar"><div class="fill" style="width:${Math.min(100, (t[k] / g[k]) * 100 || 0)}%;background:${colors[k]}"></div></div></div>`;
-               })
-               .join("");
-            $("meals").innerHTML = MEALS.map((m) => {
-               const fs = log().foods.filter((f) => f.meal === m),
-                  c = fs.reduce((s, f) => s + num(f.calories), 0);
-               return `<div class="meal"><div class="meal-head"><div><h3 style="margin:0">${m}</h3><span class="muted">${Math.round(c)} calories</span></div><button class="secondary" onclick="openFood('${m}')">+ Add</button></div>${fs.length ? fs.map((f) => `<div class="food"><div><strong>${esc(f.name)}</strong><br><small>P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g</small></div><span class="cals">${f.calories} cal</span><button class="remove" onclick="removeFood('${f.id}')" aria-label="Remove">×</button></div>`).join("") : '<p class="muted">No food logged.</p>'}</div>`;
-            }).join("");
-            renderWeight();
-            renderActivity(t.calories);
-            [
-               ["gCalories", "calories"],
-               ["gProtein", "protein"],
-               ["gCarbs", "carbs"],
-               ["gFat", "fat"],
-               ["gSteps", "steps"],
-               ["gBmr", "bmr"],
-            ].forEach(([i, k]) => {
-               if (document.activeElement !== $(i)) $(i).value = g[k];
-            });
-            charts();
-            save();
-         }
-         function renderActivity(eaten) {
-            const a = act(),
-               b = burn(),
-               g = data.goals.steps || 10000;
-            $("steps").textContent = a.steps.toLocaleString();
-            $("stepGoal").textContent = g.toLocaleString();
-            $("stepBar").style.width = Math.min(100, (a.steps / g) * 100) + "%";
-            $("burned").textContent = Math.round(b.total).toLocaleString();
-            $("active").textContent = b.active.toLocaleString();
-            $("eaten").textContent = Math.round(eaten).toLocaleString();
-            const v = Math.round(eaten - b.total);
-            $("net").textContent = (v > 0 ? "+" : "") + v;
-            $("net").style.color = v > 0 ? "var(--orange)" : "var(--green)";
-            $("workouts").innerHTML = a.workouts.length
-               ? a.workouts
-                    .map(
-                       (w, i) =>
-                          `<div class="food"><div><strong>${esc(w.name)}</strong><br><small>${num(w.min)} min</small></div><span class="cals">${num(w.kcal)} cal</span><button class="remove" onclick="removeWorkout(${i})" aria-label="Remove">×</button></div>`,
-                    )
-                    .join("")
-               : '<p class="muted">No workouts logged.</p>';
-         }
-         function addSteps(n) {
-            actSet({ steps: Math.max(0, act().steps + n) });
-            render();
-         }
-         function addWorkout() {
-            const n = $("wName").value.trim(),
-               k = num($("wKcal").value);
-            if (!n || !k) return alert("Enter a workout name and calories.");
-            actSet({
-               workouts: [
-                  ...act().workouts,
-                  { name: n, min: num($("wMin").value), kcal: k },
-               ],
-            });
-            ["wName", "wMin", "wKcal"].forEach((i) => ($(i).value = ""));
-            render();
-         }
-         function removeWorkout(i) {
-            actSet({ workouts: act().workouts.filter((_, j) => j !== i) });
-            render();
-         }
-         function openActivity() {
-            const a = act();
-            $("stepsInput").value = a.steps || "";
-            $("burnedInput").value = a.burned || "";
-            $("sleepInput").value = a.sleep || "";
-            $("activityModal").classList.add("open");
-         }
-         function saveActivity() {
-            actSet({
-               steps: num($("stepsInput").value),
-               burned: num($("burnedInput").value),
-               sleep: num($("sleepInput").value),
-            });
-            closeM("activityModal");
-            render();
-         }
-
-         function openFood(m) {
-            if (m) $("meal").value = m;
-            $("foodModal").classList.add("open");
-         }
-         function quick(n, c, p, ca, f) {
-            $("foodName").value = n;
-            $("foodCalories").value = c;
-            $("foodProtein").value = p;
-            $("foodCarbs").value = ca;
-            $("foodFat").value = f;
-         }
-         function addFood() {
-            if (!$("foodName").value.trim() || !$("foodCalories").value)
-               return alert("Enter a name and calories.");
-            log().foods.push({
-               id: crypto.randomUUID?.() || Date.now() + "",
-               meal: $("meal").value,
-               name: $("foodName").value.trim(),
-               calories: num($("foodCalories").value),
-               protein: num($("foodProtein").value),
-               carbs: num($("foodCarbs").value),
-               fat: num($("foodFat").value),
-            });
-            [
-               "foodName",
-               "foodCalories",
-               "foodProtein",
-               "foodCarbs",
-               "foodFat",
-            ].forEach((x) => ($(x).value = ""));
-            closeM("foodModal");
-            render();
-         }
-         function removeFood(id) {
-            log().foods = log().foods.filter((f) => f.id !== id);
-            render();
-         }
-         function openWeight() {
-            $("weightInput").value = data.weights[D()] || "";
-            $("weightModal").classList.add("open");
-         }
-         function saveWeight() {
-            if ($("weightInput").value)
-               data.weights[D()] = num($("weightInput").value);
-            closeM("weightModal");
-            render();
-         }
-         function renderWeight() {
-            const e = Object.entries(data.weights).sort((a, b) =>
-               b[0].localeCompare(a[0]),
-            );
-            $("weightNow").textContent =
-               data.weights[D()] ??
-               e.find((x) => x[0] <= D())?.[1] ??
-               e[0]?.[1] ??
-               "--";
-            $("weightHistory").innerHTML = e
-               .slice(0, 6)
-               .map(
-                  ([d, w]) =>
-                     `<div class="row"><span>${d}</span><strong>${w} lb</strong></div>`,
-               )
-               .join("");
-         }
-         function saveGoals() {
-            data.goals = {
-               calories: num($("gCalories").value),
-               protein: num($("gProtein").value),
-               carbs: num($("gCarbs").value),
-               fat: num($("gFat").value),
-               steps: num($("gSteps").value) || 10000,
-               bmr: num($("gBmr").value),
-            };
-            render();
-         }
-
-         function openProfile(first) {
-            $("pTitle").textContent = first
-               ? "Create your profile"
-               : "Your account";
-            $("pNote").textContent = cloud
-               ? "You're signed in with your Claude account. Your records are saved to it and follow you across devices."
-               : "You're not signed in, so records are saved only in this browser. Open this page while signed in to Claude to save them to your account.";
-            $("pName").value = data.profile.name || "";
-            $("pWeight").value = data.weights[today()] || "";
-            $("pCal").value = data.goals.calories;
-            $("profileModal").classList.add("open");
-         }
-         function saveProfile() {
-            data.profile.name = $("pName").value.trim();
-            if ($("pWeight").value)
-               data.weights[today()] = num($("pWeight").value);
-            if ($("pCal").value) data.goals.calories = num($("pCal").value);
-            closeM("profileModal");
-            render();
-         }
-
-         function shift(x) {
-            const d = new Date(D() + "T12:00:00");
-            d.setDate(d.getDate() + x);
-            $("date").value = keyOf(d);
-            render();
-         }
-         function closeM(id) {
-            $(id).classList.remove("open");
-         }
-         function outside(e, id) {
-            if (e.target.id === id) closeM(id);
-         }
-         function theme() {
-            const dk = document.documentElement.dataset.theme === "dark";
-            data.theme = dk ? "light" : "dark";
-            document.documentElement.dataset.theme = data.theme;
-            render();
-         }
-
-         function days() {
-            const a = [];
-            for (let i = 6; i >= 0; i--) {
-               const d = new Date();
-               d.setHours(12, 0, 0, 0);
-               d.setDate(d.getDate() - i);
-               a.push({
-                  key: keyOf(d),
-                  label: d.toLocaleDateString("en-US", { weekday: "short" }),
-               });
-            }
-            return a;
-         }
-         function line(id, labels, vals, o = {}) {
-            const c = $(id),
-               r = c.parentElement.getBoundingClientRect(),
-               q = devicePixelRatio || 1,
-               w = Math.max(280, r.width),
-               h = Math.max(200, r.height);
-            c.width = w * q;
-            c.height = h * q;
-            const x = c.getContext("2d");
-            x.scale(q, q);
-            const p = { l: 46, r: 16, t: 16, b: 30 },
-               iw = w - p.l - p.r,
-               ih = h - p.t - p.b,
-               fin = vals.filter((v) => v != null);
-            let max = o.max ?? Math.max(...fin, 1),
-               min = o.min ?? Math.min(0, ...fin);
-            if (max === min) max++;
-            const cs = getComputedStyle(document.documentElement),
-               X = (i) =>
-                  p.l +
-                  (vals.length === 1 ? iw / 2 : (iw * i) / (vals.length - 1)),
-               Y = (v) => p.t + ih * (1 - (v - min) / (max - min));
-            x.font = "12px sans-serif";
-            x.lineWidth = 1;
-            for (let i = 0; i < 5; i++) {
-               const y = p.t + (ih * i) / 4;
-               x.strokeStyle = cs.getPropertyValue("--line");
-               x.beginPath();
-               x.moveTo(p.l, y);
-               x.lineTo(w - p.r, y);
-               x.stroke();
-               x.fillStyle = cs.getPropertyValue("--muted");
-               x.fillText(Math.round(max - ((max - min) * i) / 4), 3, y + 4);
-            }
-            labels.forEach((v, i) => {
-               x.fillStyle = cs.getPropertyValue("--muted");
-               x.fillText(v, X(i) - 10, h - 8);
-            });
-            const col = o.color || "#0071e3";
-            x.strokeStyle = col;
-            x.lineWidth = 3;
-            x.lineJoin = "round";
-            x.beginPath();
-            let on = false;
-            vals.forEach((v, i) => {
-               if (v == null) {
-                  on = false;
-                  return;
-               }
-               on ? x.lineTo(X(i), Y(v)) : x.moveTo(X(i), Y(v));
-               on = true;
-            });
-            x.stroke();
-            x.fillStyle = col;
-            vals.forEach((v, i) => {
-               if (v == null) return;
-               x.beginPath();
-               x.arc(X(i), Y(v), 4, 0, 7);
-               x.fill();
-            });
-            if (o.zero && min < 0 && max > 0) {
-               x.strokeStyle = cs.getPropertyValue("--muted");
-               x.setLineDash([4, 4]);
-               x.lineWidth = 1;
-               x.beginPath();
-               x.moveTo(p.l, Y(0));
-               x.lineTo(w - p.r, Y(0));
-               x.stroke();
-               x.setLineDash([]);
-            }
-         }
-         function charts() {
-            const ds = days(),
-               L = ds.map((d) => d.label),
-               g = data.goals,
-               cal = [],
-               pro = [],
-               score = [],
-               ws = [],
-               st = [],
-               net = [];
-            ds.forEach((d) => {
-               const t = totals(d.key),
-                  has = (data.logs[d.key]?.foods || []).length,
-                  b = burn(d.key);
-               cal.push(Math.round(t.calories));
-               pro.push(Math.round(t.protein));
-               score.push(
-                  has
-                     ? Math.round(
-                          (Math.min(t.calories / g.calories, 1) +
-                             Math.min(t.protein / g.protein, 1)) *
-                             50,
-                       )
-                     : 0,
-               );
-               ws.push(data.weights[d.key] ?? null);
-               st.push(act(d.key).steps);
-               net.push(
-                  has && b.total ? Math.round(t.calories - b.total) : null,
-               );
-            });
-            const wf = ws.filter((v) => v != null);
-            line("scoreChart", L, score, { min: 0, max: 100 });
-            line("stepChart", L, st, { min: 0, color: "#30b85a" });
-            line("netChart", L, net, {
-               color: "#ff3b30",
-               zero: true,
-               min: Math.min(0, ...net.filter((v) => v != null)),
-            });
-            line("weightChart", L, ws, {
-               min: wf.length ? Math.floor(Math.min(...wf) - 3) : 0,
-               max: wf.length ? Math.ceil(Math.max(...wf) + 3) : 100,
-               color: "#af52de",
-            });
-            line("calChart", L, cal, { min: 0, color: "#ff9500" });
-            line("proChart", L, pro, { min: 0, color: "#0071e3" });
-         }
-         async function exportCSV() {
-            const rows = [
-               [
-                  "Date",
-                  "Meal",
-                  "Food",
-                  "Calories",
-                  "Protein",
-                  "Carbs",
-                  "Fat",
-                  "Weight",
-                  "Steps",
-                  "Burned",
-                  "Active",
-                  "Sleep",
-               ],
-            ];
-            [
-               ...new Set([
-                  ...Object.keys(data.logs),
-                  ...Object.keys(data.weights),
-                  ...Object.keys(data.activity),
-               ]),
-            ]
-               .sort()
-               .forEach((d) => {
-                  const fs = data.logs[d]?.foods?.length
-                        ? data.logs[d].foods
-                        : [{}],
-                     a = act(d),
-                     b = burn(d);
-                  fs.forEach((f, i) =>
-                     rows.push([
-                        d,
-                        f.meal || "",
-                        f.name || "",
-                        f.calories || "",
-                        f.protein || "",
-                        f.carbs || "",
-                        f.fat || "",
-                        i ? "" : data.weights[d] || "",
-                        i ? "" : a.steps || "",
-                        i ? "" : b.total || "",
-                        i ? "" : b.active || "",
-                        i ? "" : a.sleep || "",
-                     ]),
-                  );
-               });
-            const csv = rows
-               .map((r) =>
-                  r
-                     .map((v) => '"' + String(v).replaceAll('"', '""') + '"')
-                     .join(","),
-               )
-               .join("\n");
-            try {
-               const dl = window.claude && (await claude.use("downloads"));
-               if (dl) {
-                  await dl.save({ filename: "fittrack-data.csv", data: csv });
-                  return;
-               }
-            } catch {
-               return;
-            }
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-            a.download = "fittrack-data.csv";
-            a.click();
-         }
-         function resetApp() {
-            if (
-               confirm(
-                  "Delete all FitTrack data? This also clears your saved account data.",
-               )
-            ) {
-               data = norm({ theme: data.theme });
-               $("date").value = today();
-               render();
-            }
-         }
-         addEventListener("resize", () => {
-            clearTimeout(window.rt);
-            window.rt = setTimeout(charts, 150);
-         });
-         applyTheme();
-         render();
-         initCloud();
-         if (!data.profile.name && !window.claude)
-            setTimeout(() => openProfile(true), 400);
-      </script>
-   </body>
 </html>
