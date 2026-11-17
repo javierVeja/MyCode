@@ -320,7 +320,6 @@
                 min-width: 0;
             }
         }
-        }
 
         .charts {
             display: grid;
@@ -431,7 +430,7 @@
                 <p class="muted" id="hello">Nutrition, weight, activity and weekly trends</p>
             </div>
             <div class="tools">
-                <div class="chip muted"><span id="sync">Local only</span></div><button class="secondary" id="accountButton" onclick="openAccount()">&nbsp;Sign in&nbsp;</button> <button class="secondary" onclick="theme()">Theme</button>
+                <div class="chip muted"><span class="dot" id="dot"></span><span id="sync">Local only</span></div><button class="secondary" id="accountButton" onclick="openAccount()">&nbsp;Sign in&nbsp;</button> <button class="secondary" onclick="theme()">Theme</button>
             </div>
         </div>
         <div class="datebar"><button class="secondary" onclick="shift(-1)">&lsaquo;</button>&nbsp;<input id="date" type="date" onchange="render()"> <button class="secondary" onclick="shift(1)">&rsaquo;</button> <button class="secondary" onclick="$('date').value=today();render()">&nbsp;Today&nbsp;</button></div>
@@ -440,7 +439,7 @@
             <div class="title">
                 <h2>Steps &amp; calories burned</h2><button class="secondary" onclick="openActivity()">&nbsp;Log totals&nbsp;</button>
             </div>
-            <div class="big"><span id="steps">0</span> <small>/ steps</small></div>
+            <div class="big"><span id="steps">0</span> <small>/ <span id="stepGoal">10,000</span> steps</small></div>
             <div class="bar">
                 <div class="fill" id="stepBar" style="background: var(--green);"><br></div>
             </div>
@@ -570,10 +569,9 @@
            profile: {},
            theme: null,
         };
-        let data = norm(readLocal()),
-           uid = null,
-           cloud = null,
-           saveT;
+        let data = norm(readLocal());
+        let currentUser = null;
+        let accountLoading = false;
         function readLocal() {
            try {
               return JSON.parse(localStorage.getItem(KEY) || "{}");
@@ -597,50 +595,186 @@
            try {
               localStorage.setItem(KEY, JSON.stringify(data));
            } catch {}
-           if (cloud) {
-              clearTimeout(saveT);
-              saveT = setTimeout(
-                 () =>
-                    cloud
-                       .set({ json: JSON.stringify(data) })
-                       .then(() => status(true, "Saved to your account"))
-                       .catch(() =>
-                          status(false, "Sync failed – saved locally"),
-                       ),
-                 700,
-              );
-           }
         }
-        function status(on, t) {
-           $("dot").className = "dot" + (on ? " on" : "");
-           $("sync").textContent = t;
+
+        function status(on, text) {
+           const dot = $("dot");
+           if (dot) dot.className = "dot" + (on ? " on" : "");
+           $("sync").textContent = text;
         }
-        async function initCloud() {
+
+        async function cloudCall(promise, successText = "Saved to your account") {
+           if (!currentUser) return null;
            try {
-              if (!window.claude || !claude.use) return;
-              const [u, d] = await Promise.all([
-                 claude.use("user"),
-                 claude.use("db"),
-              ]);
-              if (!u || !d) return;
-              uid = await u.id();
-              if (!uid) return;
-              cloud = d.collection("data/users/" + uid).doc("fittrack");
-              const s = await cloud.get();
-              if (s.exists && s.data()?.json) {
-                 data = norm(JSON.parse(s.data().json));
-                 try {
-                    localStorage.setItem(KEY, JSON.stringify(data));
-                 } catch {}
-              } else await cloud.set({ json: JSON.stringify(data) });
-              status(true, "Synced to your account");
-              applyTheme();
-              render();
-              if (!data.profile.name) openProfile(true);
-           } catch (e) {
-              status(false, "Local only");
+              const result = await promise;
+              if (result.error) throw result.error;
+              status(true, successText);
+              return result;
+           } catch (error) {
+              console.error(error);
+              status(false, "Sync failed - saved locally");
+              return null;
            }
         }
+
+        async function cloudHasData() {
+           const checks = await Promise.all([
+              sb.from("goals").select("user_id").eq("user_id", currentUser.id).limit(1),
+              sb.from("food_entries").select("id").eq("user_id", currentUser.id).limit(1),
+              sb.from("weight_entries").select("id").eq("user_id", currentUser.id).limit(1),
+              sb.from("activity_entries").select("id").eq("user_id", currentUser.id).limit(1),
+              sb.from("workouts").select("id").eq("user_id", currentUser.id).limit(1),
+           ]);
+           for (const result of checks) {
+              if (result.error) throw result.error;
+              if (result.data?.length) return true;
+           }
+           return false;
+        }
+
+        async function uploadLocalData() {
+           if (!currentUser) return;
+           status(false, "Uploading local data...");
+           const userId = currentUser.id;
+
+           const profileName = data.profile?.name || currentUser.email?.split("@")[0] || "";
+           const foodRows = [];
+           Object.entries(data.logs).forEach(([date, day]) => {
+              (day.foods || []).forEach((food) => foodRows.push({
+                 id: food.id || crypto.randomUUID(),
+                 user_id: userId,
+                 entry_date: date,
+                 meal: food.meal,
+                 food_name: food.name,
+                 calories: num(food.calories),
+                 protein: num(food.protein),
+                 carbs: num(food.carbs),
+                 fat: num(food.fat),
+              }));
+           });
+
+           const weightRows = Object.entries(data.weights).map(([date, weight]) => ({
+              user_id: userId, entry_date: date, weight: num(weight),
+           }));
+           const activityRows = Object.entries(data.activity).map(([date, activity]) => ({
+              user_id: userId,
+              entry_date: date,
+              steps: num(activity.steps),
+              active_calories: Math.round(num(activity.steps) * 0.04 + (activity.workouts || []).reduce((sum, w) => sum + num(w.kcal), 0)),
+              total_calories: num(activity.burned),
+              sleep_hours: num(activity.sleep),
+           }));
+           const workoutRows = [];
+           Object.entries(data.activity).forEach(([date, activity]) => {
+              (activity.workouts || []).forEach((workout) => workoutRows.push({
+                 id: workout.id || crypto.randomUUID(),
+                 user_id: userId,
+                 entry_date: date,
+                 workout_type: workout.name,
+                 duration_minutes: num(workout.min),
+                 calories: num(workout.kcal),
+              }));
+           });
+
+           const operations = [
+              sb.from("profiles").upsert({ user_id: userId, name: profileName }),
+              sb.from("goals").upsert({ user_id: userId, ...data.goals }),
+           ];
+           if (foodRows.length) operations.push(sb.from("food_entries").insert(foodRows));
+           if (weightRows.length) operations.push(sb.from("weight_entries").insert(weightRows));
+           if (activityRows.length) operations.push(sb.from("activity_entries").insert(activityRows));
+           if (workoutRows.length) operations.push(sb.from("workouts").insert(workoutRows));
+
+           const results = await Promise.all(operations);
+           const failed = results.find((result) => result.error);
+           if (failed) throw failed.error;
+           status(true, "Synced to your account");
+        }
+
+        async function loadCloudData() {
+           if (!currentUser) return;
+           status(false, "Loading your account...");
+           const userId = currentUser.id;
+           const [profile, goals, foods, weights, activities, workouts] = await Promise.all([
+              sb.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+              sb.from("goals").select("*").eq("user_id", userId).maybeSingle(),
+              sb.from("food_entries").select("*").eq("user_id", userId).order("entry_date"),
+              sb.from("weight_entries").select("*").eq("user_id", userId).order("entry_date"),
+              sb.from("activity_entries").select("*").eq("user_id", userId).order("entry_date"),
+              sb.from("workouts").select("*").eq("user_id", userId).order("entry_date"),
+           ]);
+           const failed = [profile, goals, foods, weights, activities, workouts].find((r) => r.error);
+           if (failed) throw failed.error;
+
+           const next = norm({ theme: data.theme });
+           next.profile = { name: profile.data?.name || currentUser.email?.split("@")[0] || "" };
+           if (goals.data) {
+              next.goals = {
+                 calories: num(goals.data.calories), protein: num(goals.data.protein),
+                 carbs: num(goals.data.carbs), fat: num(goals.data.fat),
+                 steps: num(goals.data.steps), bmr: num(goals.data.bmr),
+              };
+           }
+           (foods.data || []).forEach((food) => {
+              (next.logs[food.entry_date] ??= { foods: [] }).foods.push({
+                 id: food.id, meal: food.meal, name: food.food_name,
+                 calories: num(food.calories), protein: num(food.protein),
+                 carbs: num(food.carbs), fat: num(food.fat),
+              });
+           });
+           (weights.data || []).forEach((entry) => { next.weights[entry.entry_date] = num(entry.weight); });
+           (activities.data || []).forEach((entry) => {
+              next.activity[entry.entry_date] = {
+                 steps: num(entry.steps), burned: num(entry.total_calories),
+                 sleep: num(entry.sleep_hours), workouts: [],
+              };
+           });
+           (workouts.data || []).forEach((workout) => {
+              const day = (next.activity[workout.entry_date] ??= { steps: 0, burned: 0, sleep: 0, workouts: [] });
+              day.workouts.push({ id: workout.id, name: workout.workout_type, min: num(workout.duration_minutes), kcal: num(workout.calories) });
+           });
+           data = next;
+           save();
+           applyTheme();
+           render();
+           status(true, "Synced to your account");
+        }
+
+        async function syncAccountData() {
+           if (!currentUser || accountLoading) return;
+           accountLoading = true;
+           try {
+              if (await cloudHasData()) await loadCloudData();
+              else {
+                 await uploadLocalData();
+                 await loadCloudData();
+              }
+           } catch (error) {
+              console.error(error);
+              status(false, "Sync failed - saved locally");
+              alert("FitTrack signed in, but cloud sync failed: " + error.message);
+           } finally {
+              accountLoading = false;
+           }
+        }
+
+        async function syncGoals() {
+           if (!currentUser) return;
+           await cloudCall(sb.from("goals").upsert({ user_id: currentUser.id, ...data.goals }));
+        }
+
+        async function syncActivityDate(date = D()) {
+           if (!currentUser) return;
+           const a = act(date);
+           const b = burn(date);
+           const existing = await sb.from("activity_entries").select("id").eq("user_id", currentUser.id).eq("entry_date", date);
+           if (existing.error) return cloudCall(Promise.resolve(existing));
+           if (existing.data?.length) {
+              return cloudCall(sb.from("activity_entries").update({ steps: a.steps, active_calories: b.active, total_calories: a.burned, sleep_hours: a.sleep }).eq("id", existing.data[0].id));
+           }
+           return cloudCall(sb.from("activity_entries").insert({ user_id: currentUser.id, entry_date: date, steps: a.steps, active_calories: b.active, total_calories: a.burned, sleep_hours: a.sleep }));
+        }
+
         const num = (v) => Number(v) || 0,
            pad = (n) => String(n).padStart(2, "0");
         const keyOf = (d) =>
@@ -763,26 +897,38 @@
                    .join("")
               : '<p class="muted">No workouts logged.</p>';
         }
-        function addSteps(n) {
+        async function addSteps(n) {
            actSet({ steps: Math.max(0, act().steps + n) });
            render();
+           await syncActivityDate();
         }
-        function addWorkout() {
+        async function addWorkout() {
            const n = $("wName").value.trim(),
               k = num($("wKcal").value);
            if (!n || !k) return alert("Enter a workout name and calories.");
            actSet({
               workouts: [
                  ...act().workouts,
-                 { name: n, min: num($("wMin").value), kcal: k },
+                 { id: crypto.randomUUID(), name: n, min: num($("wMin").value), kcal: k },
               ],
            });
            ["wName", "wMin", "wKcal"].forEach((i) => ($(i).value = ""));
            render();
+           const workout = act().workouts.at(-1);
+           if (currentUser) {
+              await cloudCall(sb.from("workouts").insert({
+                 id: workout.id, user_id: currentUser.id, entry_date: D(),
+                 workout_type: workout.name, duration_minutes: workout.min, calories: workout.kcal,
+              }));
+              await syncActivityDate();
+           }
         }
-        function removeWorkout(i) {
+        async function removeWorkout(i) {
+           const workout = act().workouts[i];
            actSet({ workouts: act().workouts.filter((_, j) => j !== i) });
            render();
+           if (currentUser && workout?.id) await cloudCall(sb.from("workouts").delete().eq("id", workout.id));
+           await syncActivityDate();
         }
         function openActivity() {
            const a = act();
@@ -791,7 +937,7 @@
            $("sleepInput").value = a.sleep || "";
            $("activityModal").classList.add("open");
         }
-        function saveActivity() {
+        async function saveActivity() {
            actSet({
               steps: num($("stepsInput").value),
               burned: num($("burnedInput").value),
@@ -812,10 +958,10 @@
            $("foodCarbs").value = ca;
            $("foodFat").value = f;
         }
-        function addFood() {
+        async function addFood() {
            if (!$("foodName").value.trim() || !$("foodCalories").value)
               return alert("Enter a name and calories.");
-           log().foods.push({
+           const food = {
               id: crypto.randomUUID?.() || Date.now() + "",
               meal: $("meal").value,
               name: $("foodName").value.trim(),
@@ -823,7 +969,8 @@
               protein: num($("foodProtein").value),
               carbs: num($("foodCarbs").value),
               fat: num($("foodFat").value),
-           });
+           };
+           log().foods.push(food);
            [
               "foodName",
               "foodCalories",
@@ -833,20 +980,31 @@
            ].forEach((x) => ($(x).value = ""));
            closeM("foodModal");
            render();
+           if (currentUser) await cloudCall(sb.from("food_entries").insert({
+              id: food.id, user_id: currentUser.id, entry_date: D(), meal: food.meal,
+              food_name: food.name, calories: food.calories, protein: food.protein,
+              carbs: food.carbs, fat: food.fat,
+           }));
         }
-        function removeFood(id) {
+        async function removeFood(id) {
            log().foods = log().foods.filter((f) => f.id !== id);
            render();
+           if (currentUser) await cloudCall(sb.from("food_entries").delete().eq("id", id));
         }
         function openWeight() {
            $("weightInput").value = data.weights[D()] || "";
            $("weightModal").classList.add("open");
         }
-        function saveWeight() {
+        async function saveWeight() {
            if ($("weightInput").value)
               data.weights[D()] = num($("weightInput").value);
            closeM("weightModal");
            render();
+           if (currentUser && data.weights[D()]) {
+              const old = await sb.from("weight_entries").delete().eq("user_id", currentUser.id).eq("entry_date", D());
+              if (old.error) return cloudCall(Promise.resolve(old));
+              await cloudCall(sb.from("weight_entries").insert({ user_id: currentUser.id, entry_date: D(), weight: data.weights[D()] }));
+           }
         }
         function renderWeight() {
            const e = Object.entries(data.weights).sort((a, b) =>
@@ -865,7 +1023,7 @@
               )
               .join("");
         }
-        function saveGoals() {
+        async function saveGoals() {
            data.goals = {
               calories: num($("gCalories").value),
               protein: num($("gProtein").value),
@@ -875,159 +1033,93 @@
               bmr: num($("gBmr").value),
            };
            render();
+           await syncGoals();
         }
-        
-        let currentUser = null;
-        
+
         async function initializeAccount() {
-           const {
-              data: { session },
-           } = await sb.auth.getSession();
-        
+           const { data: { session }, error } = await sb.auth.getSession();
+           if (error) console.error(error);
            currentUser = session?.user || null;
            updateAccountDisplay();
-        
-           sb.auth.onAuthStateChange((_event, session) => {
+           if (currentUser) await syncAccountData();
+
+           sb.auth.onAuthStateChange((event, session) => {
               currentUser = session?.user || null;
               updateAccountDisplay();
+              if (event === "SIGNED_IN" && currentUser) setTimeout(syncAccountData, 0);
            });
         }
-        
+
         function updateAccountDisplay() {
            const button = $("accountButton");
-        
            if (currentUser) {
               button.textContent = "Account";
-              status(true, "Signed in and ready to sync");
+              if (!accountLoading) status(true, "Signed in");
            } else {
               button.textContent = "Sign in";
               status(false, "Local only");
            }
         }
-        
+
         function openAccount() {
            const signedIn = Boolean(currentUser);
-        
-           $("accountTitle").textContent = signedIn
-              ? "Your account"
-              : "Sign in";
-        
+           $("accountTitle").textContent = signedIn ? "Your account" : "Sign in";
            $("accountNote").textContent = signedIn
-              ? `Signed in as ${currentUser.email}`
+              ? `Signed in as ${currentUser.email}. Your FitTrack data syncs with Supabase.`
               : "Sign in or create an account to save your records across devices.";
-        
            $("accountEmail").value = currentUser?.email || "";
            $("accountEmail").disabled = signedIn;
            $("accountPassword").style.display = signedIn ? "none" : "";
            $("signOutButton").style.display = signedIn ? "" : "none";
-        
            $("accountModal").classList.add("open");
         }
-        
+
         async function createAccount() {
            const email = $("accountEmail").value.trim();
            const password = $("accountPassword").value;
-        
-           if (!email) {
-              alert("Enter your email address.");
-              return;
-           }
-        
-           if (password.length < 6) {
-              alert("Your password must contain at least 6 characters.");
-              return;
-           }
-        
+           if (!email) return alert("Enter your email address.");
+           if (password.length < 6) return alert("Your password must contain at least 6 characters.");
            status(false, "Creating account...");
-        
-           const { data: authData, error } = await sb.auth.signUp({
-              email,
-              password,
-           });
-        
+           const { data: authData, error } = await sb.auth.signUp({ email, password });
            if (error) {
               status(false, "Account creation failed");
-              alert(error.message);
-              return;
+              return alert(error.message);
            }
-        
            if (authData.session) {
               currentUser = authData.user;
-              status(true, "Account created");
               closeM("accountModal");
               updateAccountDisplay();
-              openProfile(true);
+              await syncAccountData();
            } else {
               status(false, "Check your email");
-              alert(
-        "Your account was created. Check your email and click the confirmation link before signing in.",
-              );
+              alert("Your account was created. Check your email and click the confirmation link before signing in.");
            }
         }
-        
+
         async function signIn() {
            const email = $("accountEmail").value.trim();
            const password = $("accountPassword").value;
-        
-           if (!email || !password) {
-              alert("Enter your email address and password.");
-              return;
-           }
-        
+           if (!email || !password) return alert("Enter your email address and password.");
            status(false, "Signing in...");
-        
-           const { data: authData, error } =
-              await sb.auth.signInWithPassword({
-        email,
-        password,
-              });
-        
+           const { data: authData, error } = await sb.auth.signInWithPassword({ email, password });
            if (error) {
               status(false, "Sign in failed");
-              alert(error.message);
-              return;
+              return alert(error.message);
            }
-        
            currentUser = authData.user;
-        
-           status(true, "Signed in");
            closeM("accountModal");
            updateAccountDisplay();
+           await syncAccountData();
         }
-        
+
         async function signOut() {
            const { error } = await sb.auth.signOut();
-        
-           if (error) {
-              alert(error.message);
-              return;
-           }
-        
+           if (error) return alert(error.message);
            currentUser = null;
            closeM("accountModal");
            updateAccountDisplay();
         }
-        function openProfile(first) {
-           $("pTitle").textContent = first
-              ? "Create your profile"
-              : "Your account";
-           $("pNote").textContent = cloud
-              ? "You're signed in with your Claude account. Your records are saved to it and follow you across devices."
-              : "You're not signed in, so records are saved only in this browser. Open this page while signed in to Claude to save them to your account.";
-           $("pName").value = data.profile.name || "";
-           $("pWeight").value = data.weights[today()] || "";
-           $("pCal").value = data.goals.calories;
-           $("profileModal").classList.add("open");
-        }
-        function saveProfile() {
-           data.profile.name = $("pName").value.trim();
-           if ($("pWeight").value)
-              data.weights[today()] = num($("pWeight").value);
-           if ($("pCal").value) data.goals.calories = num($("pCal").value);
-           closeM("profileModal");
-           render();
-        }
-        
+
         function shift(x) {
            const d = new Date(D() + "T12:00:00");
            d.setDate(d.getDate() + x);
@@ -1233,30 +1325,24 @@
                     .join(","),
               )
               .join("\n");
-           try {
-              const dl = window.claude && (await claude.use("downloads"));
-              if (dl) {
-                 await dl.save({ filename: "fittrack-data.csv", data: csv });
-                 return;
-              }
-           } catch {
-              return;
-           }
            const a = document.createElement("a");
            a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
            a.download = "fittrack-data.csv";
            a.click();
         }
-        function resetApp() {
-           if (
-              confirm(
-                 "Delete all FitTrack data? This also clears your saved account data.",
-              )
-           ) {
-              data = norm({ theme: data.theme });
-              $("date").value = today();
-              render();
+        async function resetApp() {
+           if (!confirm("Delete all FitTrack data? This deletes local data and, when signed in, your Supabase records.")) return;
+           if (currentUser) {
+              status(false, "Deleting account data...");
+              const tables = ["food_entries", "weight_entries", "activity_entries", "workouts", "goals", "profiles"];
+              const results = await Promise.all(tables.map((table) => sb.from(table).delete().eq("user_id", currentUser.id)));
+              const failed = results.find((result) => result.error);
+              if (failed) return alert("Could not delete all cloud data: " + failed.error.message);
            }
+           data = norm({ theme: data.theme });
+           $("date").value = today();
+           render();
+           status(Boolean(currentUser), currentUser ? "Account data cleared" : "Local data cleared");
         }
         addEventListener("resize", () => {
            clearTimeout(window.rt);
@@ -1265,11 +1351,7 @@
         applyTheme();
         render();
         initializeAccount();
-        if (!data.profile.name && !window.claude)
-           setTimeout(() => openProfile(true), 400);
     </script>
-
-<div style="bottom: 10px; right: 10px; position: absolute;"><a href="https://signatureforemail.com/?utm_source=wth_free_link&utm_medium=external" target="_blank" rel="noopener" style="font-size:11px; color: #c0c0c0;">Creador de firmas de correo electrónico</a></div>
 </body>
 
 </html>
