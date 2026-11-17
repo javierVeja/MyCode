@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
       });
 
       const response = await fetch(
-         `https://api.nal.usda.gov/fdc/v1/foods/search?${params}`,
+         `https://api.nal.usda.gov/fdc/v1/foods/search?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -40,4 +40,65 @@ module.exports = async function handler(req, res) {
 
       const foods = (data.foods || []).map((food) => {
          const getNutrient = (...names) => {
-            const nutrient = (food.foodNutrients || []).find((item
+            const nutrient = (food.foodNutrients || []).find((item) =>
+               names.some(
+                  (name) =>
+                     item.nutrientName?.toLowerCase() ===
+                     name.toLowerCase()
+               )
+            );
+
+            return Number(nutrient?.value || 0);
+         };
+
+         return {
+            fdcId: food.fdcId,
+
+            name: food.description || "Unknown food",
+
+            brand:
+               food.brandOwner ||
+               food.brandName ||
+               "",
+
+            barcode: food.gtinUpc || "",
+
+            servingSize: food.servingSize || null,
+
+            servingUnit: food.servingSizeUnit || "",
+
+            calories: getNutrient(
+               "Energy",
+               "Energy (Atwater General Factors)",
+               "Energy (Atwater Specific Factors)"
+            ),
+
+            protein: getNutrient("Protein"),
+
+            carbs: getNutrient(
+               "Carbohydrate, by difference"
+            ),
+
+            fat: getNutrient(
+               "Total lipid (fat)"
+            ),
+         };
+      });
+
+      return res.status(200).json({
+         query: query,
+         count: foods.length,
+         foods: foods,
+      });
+   } catch (error) {
+      console.error(
+         "USDA FoodData Central error:",
+         error
+      );
+
+      return res.status(500).json({
+         error: "Unable to search USDA FoodData Central",
+         details: error.message,
+      });
+   }
+};
