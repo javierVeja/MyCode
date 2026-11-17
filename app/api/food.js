@@ -4,3 +4,4 @@ export default async function handler(req, res) {
          error: "Method not allowed",
       });
    }
+}
